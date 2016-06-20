@@ -1,0 +1,164 @@
+#ifndef _GAMEMAIN_H_
+#define _GAMEMAIN_H_
+
+#include "GameEngine.h"
+class CCharacter;
+
+enum EPolarity
+{
+	EPolarity_Red,
+	EPolarity_Blue,
+	EPolarity_Neutral,
+
+	EPolarity_Max
+};
+
+enum EPlayer
+{
+	EPlayer1 = 0,
+	EPlayer2 = 1,
+	
+	EPlayer_Max
+};
+
+inline class CGameMain* GetGameMain() { return ( (CGameMain*)GetGameEngine()->GetCurrentGameMode() ); }
+
+class CGameMain : public CGameMode
+{
+public:
+	CGameMain( std::string strLevel, BOOL bCoop ) : m_strLevel(strLevel), m_bCoopMode(bCoop) {}
+
+	void	Init();
+	void	Update( const FLOAT fFrameTime );
+	void	Term();
+	void	Render();
+	void	OnClose();
+
+	void	SetCheckpoint( CCharacter* pPlayer, VECTOR vPos );
+	void	GotoNextCheckpoint( VECTOR vPos );
+	void	GotoNextLevel( INT nLevel );
+
+	class CProjectileManager*	GetProjectileManager();
+	std::list<CCharacter*>*		GetPlayers();
+	CCharacter*					GetPlayer( EPlayer ePlayer );
+	CCharacter*					GetClosestCharacter( VECTOR vPosition );
+
+	COLOUR_RGB		GetPolarityColour( EPolarity ePolarity );
+	COLOUR_RGB		GetOppositePolarityColour( EPolarity ePolarity );
+
+	BOOL	TriggerCameraImmediately();
+	void	ChangedLevel();
+
+private:
+	void	CheckDeath( const FLOAT fFrameTime );
+	void	CheckNextLevel();
+	void	HandleInput();
+	void	PromptToSave();
+	void	BackToMenu();
+
+	BOOL				m_bCoopMode;
+	std::string			m_strLevel;
+	std::list<CCharacter*>	m_listPlayers;
+
+	class CEditor*		m_pEditor;
+	class CProjectileManager*	m_pProjectileManager;
+	class CInputParser*			m_pInputParser;
+
+	std::list< class CCamera* >		m_pCameras;
+
+	void	BackupLevel( std::string strFile );
+	void	SaveLevel( std::string strFile );
+	void	LoadLevel( std::string strFile );
+
+	VECTOR	m_vCheckpoint;
+	EPolarity m_eCheckpointPolarity;
+	std::string m_strCheckpointCamera;
+	FLOAT	m_fDeathTime;
+	BOOL	m_bTriggerCameraImmediately;
+	INT		m_nNextLevel;
+	BOOL	m_bChangedLevel;
+};
+
+inline CProjectileManager*	CGameMain::GetProjectileManager()
+{
+	return m_pProjectileManager;
+}
+
+inline std::list<CCharacter*>* CGameMain::GetPlayers()
+{
+	return &m_listPlayers;
+}
+
+inline CCharacter* CGameMain::GetPlayer( EPlayer ePlayer )
+{
+	INT i = 0;
+	std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+	std::list<CCharacter*>::iterator it;
+	for ( it = pPlayers->begin() ; it != pPlayers->end(); it++ )
+	{
+		if ( i == ePlayer )
+		{
+			return (*it);
+		}
+		i++;
+	}
+	return NULL;
+}
+
+inline void CGameMain::GotoNextLevel( INT nLevel )
+{
+	m_nNextLevel = nLevel;
+}
+
+inline COLOUR_RGB CGameMain::GetOppositePolarityColour( EPolarity ePolarity )
+{
+	COLOUR_RGB Clr;
+	switch( ePolarity )
+	{
+		case EPolarity_Red:
+		{
+			return GetPolarityColour( EPolarity_Blue );
+		}
+		break;
+
+		case EPolarity_Blue:
+		{
+			return GetPolarityColour( EPolarity_Red );
+		}
+		break;
+
+		default:
+			ASSERT( FALSE );
+	}
+	return Clr;
+}
+
+inline COLOUR_RGB CGameMain::GetPolarityColour( EPolarity ePolarity )
+{
+	COLOUR_RGB Clr;
+	switch( ePolarity )
+	{
+		case EPolarity_Red:
+		{
+			Clr = COLOUR_RGB( 1.0f, 0.0f, 0.0f );
+		}
+		break;
+
+		case EPolarity_Blue:
+		{
+			Clr = COLOUR_RGB( 0.0f, 0.5f, 1.0f );
+		}
+		break;
+
+		default:
+			ASSERT( FALSE );
+	}
+	return Clr;
+}
+
+inline void CGameMain::ChangedLevel()
+{
+	m_bChangedLevel = TRUE;
+}
+
+#endif

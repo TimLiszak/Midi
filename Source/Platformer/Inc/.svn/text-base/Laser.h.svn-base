@@ -1,0 +1,106 @@
+#ifndef _LASER_H_
+#define _LASER_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CLaserDescription : public CActorDescription
+{
+public:
+	CLaserDescription() : CActorDescription(), 
+		fAngle( 0.0f ),
+		ePolarity( EPolarity_Red ),
+		fLength( 200.0f ),
+		bStartEnabled( TRUE ),
+		fFlashTime( 0.0f ),
+        bTileCollide( TRUE )
+	{
+		uGroup = EActorGroup_NoCollision;
+	}
+	REFLECTION_INFO;
+
+	UINT	ePolarity;
+	FLOAT	fAngle;
+	FLOAT	fLength;
+	BOOL	bStartEnabled;
+	FLOAT	fFlashTime;
+    BOOL    bTileCollide;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fAngle );
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( fLength );
+		Serializer->Serialize( bStartEnabled );
+		Serializer->Serialize( fFlashTime );
+
+        if ( Serializer->GetVersion() == EFileVersion_LaserCollide )
+        {
+            Serializer->Serialize( bTileCollide );
+        }
+	}
+
+};
+
+inline void CLaserDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 1 );
+	REGISTER( REF_FLOAT, fAngle );
+	REGISTER( REF_FLOAT, fLength );
+	REGISTER_LIMIT( REF_UINT, bStartEnabled, 0, 1 );
+	REGISTER_ALL( REF_FLOAT, fFlashTime, 0.0f, 99.0f, 0.05f );
+	REGISTER_LIMIT( REF_UINT, bTileCollide, 0, 1 );
+}
+
+class CLaser : public CRotatableLevelObject
+{
+public:
+	typedef CLaserDescription ActorDescription;
+	
+	virtual void Reset();
+
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Laser; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	SetRotation( FLOAT fAngle );
+	virtual FLOAT	GetRotation();
+
+	virtual void	UpdateEditorSelection();
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget );
+	virtual void	Render();
+
+	BOOL	m_bHitCharacter;
+	FLOAT	m_fHitPosition;
+	FLOAT	m_fFlashTime;
+	BOOL	m_bFlash;
+
+private:
+	CLaserDescription* GetDescription() { return (CLaserDescription*)m_pDescription; }
+};
+
+inline void CLaser::SetRotation( FLOAT fAngle )
+{
+	m_fCurrentRotation = fAngle;
+}
+
+inline FLOAT CLaser::GetRotation()
+{
+	return m_fCurrentRotation;
+}
+
+#endif

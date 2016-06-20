@@ -1,0 +1,15 @@
+#ifndef _POLAR_LEVEL_OBJECT_H_
+#define _POLAR_LEVEL_OBJECT_H_
+
+#include "Level.h"
+#include "GameMain.h"
+
+class CPolarLevelObject : public CLevelObject
+{
+public:
+	virtual inline BOOL	IsDangerous() { return TRUE; }
+
+	virtual EPolarity	GetPolarity() = 0;
+};
+
+#endif

@@ -1,0 +1,82 @@
+#include "StdAfx.h"
+#include "WallSlideMovement.h"
+#include "Character.h"
+#include "Input.h"
+#include "CharacterPhysics.h"
+#include "GameMain.h"
+#include "InputMovement.h"
+
+static const FLOAT	JUMP_VELOCITY = 10.5f * 60.0f;
+static const FLOAT	WALL_JUMP_VELOCITY = 6.0f * 60.0f;
+static const FLOAT	WALL_RELEASE_TIME = 0.1f;
+static const FLOAT	DISABLE_INPUT_TIME = 0.4f;
+
+void CWallSlideMovement::Init()
+{
+	m_fHoldDirectionTime = 0.0f;
+}
+
+void CWallSlideMovement::Update( const FLOAT fFrameTime )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+	if ( pChar->IsDead() ) 
+	{
+		return;
+	}
+    pChar->GetInputMovement()->StopWallJump();
+
+	CCharacterInput* pInput = pChar->GetCharacterInput();
+    INT nDownDir = pChar->GetDownDirection();
+
+	if ( pInput->IsRunning() )
+	{
+		if ( pChar->GetCharacterState()->GetWallDirection() < 0 && 
+			pInput->GetRunDirection() > 0.0f )
+		{
+			m_fHoldDirectionTime += fFrameTime;
+		}
+		else if ( pChar->GetCharacterState()->GetWallDirection() > 0 && 
+			pInput->GetRunDirection() < 0.0f )
+		{
+			m_fHoldDirectionTime += fFrameTime;
+		}
+		else
+		{
+			m_fHoldDirectionTime = 0.0f;
+		}
+		
+
+        // Is Moving up
+        if ( pChar->GetPhysics()->GetVelocityY() < 0 )
+        {
+            if( m_fHoldDirectionTime > 0.0f )
+            {
+			    pChar->GetCharacterState()->SetInAir();
+			    pChar->GetPhysics()->StopX();
+            }
+        }
+		else 
+		{
+            if( m_fHoldDirectionTime > WALL_RELEASE_TIME )
+            {
+			    pChar->GetCharacterState()->SetInAir();
+			    pChar->GetPhysics()->StopX();
+            }
+		}
+	}
+
+	if ( pInput->JumpTriggered() )
+	{
+        INT nDirection = -pChar->GetCharacterState()->GetWallDirection();
+		FLOAT fXForce = nDirection * WALL_JUMP_VELOCITY;
+		pChar->GetPhysics()->SetForce( VECTOR( fXForce, -nDownDir * JUMP_VELOCITY ) );
+		pChar->GetCharacterState()->SetInAir();
+		pChar->DisableAirMovement( DISABLE_INPUT_TIME );
+        pChar->GetInputMovement()->SetDirection( nDirection );
+        pChar->GetInputMovement()->StartWallJump();
+	}
+}
+
+void CWallSlideMovement::Term()
+{
+}

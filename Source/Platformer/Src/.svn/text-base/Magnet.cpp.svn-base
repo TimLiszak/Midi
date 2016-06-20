@@ -1,0 +1,181 @@
+#include "StdAfx.h"
+#include "Magnet.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "ProjectileManager.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "Character.h"
+
+CReflectInfo CMagnetDescription::m_ref_info; 
+
+static const FLOAT	COLLISION_BUFFER = 2.0f;
+
+CActor*	CMagnet::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CMagnet>();
+}
+
+void CMagnet::InitActor( const ActorDescription* pDesc )
+{
+	m_bHitCharacter = FALSE;
+	m_fHitPosition = 1.0f;
+
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+	m_fDrawDistance = 0.0f;
+}
+
+void CMagnet::UpdateActor( const FLOAT fFrameTime )
+{
+	m_fDrawDistance += GetDescription()->fForce * fFrameTime;
+	if ( m_fDrawDistance > GetDescription()->fLength )
+	{
+		m_fDrawDistance = 0.0f;
+	}
+}
+
+void CMagnet::UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget )
+{
+	if ( m_bEnabled )
+	{
+		VECTOR vDir = GetDirection();
+		VECTOR vExtents = GetExtents();
+		if ( GetDescription()->bVertical )
+		{
+			vExtents.y = GetDescription()->fLength * 0.5f;
+			vExtents.x -= COLLISION_BUFFER;
+		}
+		else
+		{
+			vExtents.x = GetDescription()->fLength * 0.5f;
+			vExtents.y -= COLLISION_BUFFER;
+		}
+
+		// Check collision
+		UINT uGroupsMask = 1 << EActorGroup_Character;
+		std::list<CActor*> Results;
+		CCollision::SAABBox Box( vExtents, vTarget + vDir * ( GetDescription()->fLength * 0.5f ) );
+		if ( GetGameEngine()->GetWorld()->CheckBoxCollision( Results, Box, uGroupsMask ) )
+		{
+			std::list<CActor*>::iterator it;
+			for ( it = Results.begin() ; it != Results.end(); it++ )
+			{
+				
+				CCharacter* pChar = (CCharacter*)(*it);
+				if ( pChar->GetPolarity() == (EPolarity)GetDescription()->ePolarity )
+				{
+					pChar->AddForce( vDir * GetDescription()->fForce );
+				}
+				else
+				{
+					pChar->AddForce( -vDir * GetDescription()->fForce );
+				}
+
+				if ( !GetDescription()->bVertical )
+				{
+					pChar->DisableAirMovement( 0.2f );
+				}
+
+				pChar->AttachToActor( this );
+			}
+		}
+	}
+
+	SetPosition( vTarget );
+}
+
+void CMagnet::Render()
+{
+	CCharacter* pPlayer = GetGameMain()->GetClosestCharacter( GetPosition() );
+	BOOL bSame = (EPolarity)GetDescription()->ePolarity == pPlayer->GetPolarity();
+
+	COLOUR_RGB Clr = GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity );
+	COLOUR_RGB OtherClr = GetGameMain()->GetOppositePolarityColour( (EPolarity)GetDescription()->ePolarity );
+	VECTOR vDir = GetDirection();
+	vDir = vDir * GetDescription()->fLength;
+
+	if ( m_bEnabled )
+	{
+		vDir = GetDirection();
+		if ( bSame )
+		{
+			DrawMagnetism( m_vPosition, vDir, Clr );
+			CRender2d::DrawRect2( m_vPosition, m_vPosition + vDir * GetDescription()->fLength, GetDescription()->bVertical ? m_vExtents.x : m_vExtents.y, Clr );
+		}
+		else
+		{
+			DrawMagnetism( m_vPosition + vDir * GetDescription()->fLength, -vDir, OtherClr );
+			CRender2d::DrawRect2( m_vPosition, m_vPosition + vDir * GetDescription()->fLength, GetDescription()->bVertical ? m_vExtents.x : m_vExtents.y, OtherClr );
+		}
+
+	}
+
+	CRender2d::DrawRectFill( m_vPosition, m_vExtents, 0.0f, COLOUR_RGB(0.5f,0.5f,0.5f) );
+}
+
+void CMagnet::DrawMagnetism( VECTOR vPos, VECTOR vDir, COLOUR_RGB Clr )
+{
+	FLOAT fSpacing = 20.0f;
+	INT NUM_WAVES = (INT)(GetDescription()->fLength / fSpacing);
+	fSpacing = GetDescription()->fLength / NUM_WAVES;
+	FLOAT fDist = m_fDrawDistance;
+
+	VECTOR vP1;
+	VECTOR vP2;
+	if ( GetDescription()->bVertical )
+	{
+		vP1.Set( vPos.x - m_vExtents.x, vPos.y );
+		vP2.Set( vPos.x + m_vExtents.x, vPos.y );
+	}
+	else
+	{
+		vP1.Set( vPos.x, vPos.y - m_vExtents.y );
+		vP2.Set( vPos.x, vPos.y + m_vExtents.y );
+	}
+
+
+	for (INT i = 0; i < NUM_WAVES; i++)
+	{
+		CRender2d::DrawLine( vP1 + vDir * fDist, vP2 + vDir * fDist, Clr );
+		fDist += fSpacing;
+		if ( fDist > GetDescription()->fLength )
+		{
+			fDist -= GetDescription()->fLength;
+		}
+	}
+
+}
+
+void CMagnet::CreateComponents() 
+{
+}
+
+void CMagnet::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CMagnetDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+VECTOR CMagnet::GetDirection()
+{
+	if ( GetDescription()->bVertical )
+	{
+		return VECTOR( 0, GetDescription()->nDirection );
+	}
+	else
+	{
+		return VECTOR( GetDescription()->nDirection, 0 );
+	}
+}
+

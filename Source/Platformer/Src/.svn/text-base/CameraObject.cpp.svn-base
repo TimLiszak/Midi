@@ -1,0 +1,258 @@
+#include "StdAfx.h"
+#include "CameraObject.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "LookAtCamera.h"
+#include "View.h"
+
+CReflectInfo CCameraObjectDescription::m_ref_info; 
+
+CActor*	CCameraObject::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CCameraObject>();
+}
+
+void CCameraObject::InitActor( const ActorDescription* pDesc )
+{
+	m_pCamera = NULL;
+	m_bEnabled = FALSE;
+	m_bWasEnabled = FALSE;
+}
+
+void CCameraObject::Reset()
+{
+	SetPosition( m_pDescription->vPosition );
+
+	// Update movement
+	if ( m_pCamera )
+	{
+		if ( GetDescription()->nCameraType == ECameraType_Player )
+		{
+			CPlayerCamera* pPlayerCamera = (CPlayerCamera*)m_pCamera;
+
+			VECTOR vMin = GetDescription()->vMin;
+			VECTOR vMax = GetDescription()->vMax;
+
+			pPlayerCamera->SetMaxX( vMax.x );
+			pPlayerCamera->SetMaxY( vMax.y );
+			pPlayerCamera->SetMinX( vMin.x );
+			pPlayerCamera->SetMinY( vMin.y );
+		}
+	}
+}
+
+void CCameraObject::SetPosition( VECTOR vPos, BOOL bFromEditor )
+{
+	if ( bFromEditor )
+	{
+		CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+		if ( !pKey->IsKeyDown( EKbKey_CONTROL ) )
+		{
+			VECTOR vDiff = vPos - GetPosition();
+			GetDescription()->vMin += vDiff;
+			GetDescription()->vMax += vDiff;
+		}
+	}
+
+	CLevelObject::SetPosition( vPos, bFromEditor );
+}
+
+void CCameraObject::TermActor()
+{
+	if ( m_pCamera )
+	{
+		GetGameEngine()->GetCameraManager()->RemoveCamera( GetCameraName() );
+
+		delete m_pCamera;
+		m_pCamera = NULL;
+	}
+}
+
+void CCameraObject::UpdateActor( const FLOAT fFrameTime )
+{
+	if ( !m_pCamera )
+	{
+		CreateCamera();
+	}
+
+	//if ( m_bEnabled )
+	{
+		for (INT i = 0; i < 2; i++)
+		{
+			if ( m_TriggerId[i] )
+			{
+				std::string strId = GetCameraName();
+				std::string CurrentName = GetGameEngine()->GetCameraManager()->GetCurrentCameraName( i );
+
+				if ( CurrentName != "debug" && CurrentName != strId )
+				{
+					if ( GetGameMain()->TriggerCameraImmediately() || GetDescription()->fTransitionTime == 0.0f )
+					{
+						GetGameEngine()->GetCameraManager()->SetCurrentCamera( i, strId );
+					}
+					else
+					{
+						GetGameEngine()->GetCameraManager()->TransitionToCamera( i, strId, GetDescription()->fTransitionTime );
+					}
+				}
+
+				m_TriggerId[i] = FALSE;
+			}
+		}
+	}
+
+	// Update movement
+	if ( m_pCamera )
+	{
+		if ( GetDescription()->nCameraType == ECameraType_Player )
+		{
+			CPlayerCamera* pPlayerCamera = (CPlayerCamera*)m_pCamera;
+
+			VECTOR vMin = GetDescription()->vMin - GetDescription()->vPosition + GetPosition();
+			VECTOR vMax = GetDescription()->vMax - GetDescription()->vPosition + GetPosition();
+
+			pPlayerCamera->SetMaxX( vMax.x );
+			pPlayerCamera->SetMaxY( vMax.y );
+			pPlayerCamera->SetMinX( vMin.x );
+			pPlayerCamera->SetMinY( vMin.y );
+		}
+	}
+
+}
+
+void CCameraObject::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.5f,0.8f,0.5f) );
+}
+
+void CCameraObject::CreateComponents() 
+{
+}
+
+void CCameraObject::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CCameraObjectDescription();
+	}
+
+	m_pDescription->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+
+}
+
+void CCameraObject::CreateCamera()
+{
+	if ( !m_pCamera )
+	{
+		switch ( GetDescription()->nCameraType )
+		{
+			case ECameraType_Player:
+			{
+				std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+				std::list<CCharacter*>::iterator it;
+				it = pPlayers->begin();
+				CPlayerCamera* pPlayerCamera = new CPlayerCamera( (*it) );
+				it++;
+				for ( ; it != pPlayers->end(); it++ )
+				{
+					pPlayerCamera->AddActor( *it );
+				}
+
+				pPlayerCamera->SetMaxX( GetDescription()->vMax.x );
+				pPlayerCamera->SetMaxY( GetDescription()->vMax.y );
+				pPlayerCamera->SetMinX( GetDescription()->vMin.x );
+				pPlayerCamera->SetMinY( GetDescription()->vMin.y );
+				pPlayerCamera->SetOffset( GetDescription()->vOffset );
+
+				m_pCamera = pPlayerCamera;
+			}
+			break;
+
+			case ECameraType_MoveToPosition:
+			{
+				CLookAtCamera* pLookAtCamera = new CLookAtCamera( GetDescription()->vPosition + GetDescription()->vOffset, GetDescription()->fTime );
+				m_pCamera = pLookAtCamera;
+			}
+			break;
+
+			default:
+				ASSERT( FALSE );
+		}
+
+		GetGameEngine()->GetCameraManager()->AddCamera( GetCameraName(), m_pCamera );
+	}
+}
+
+void CCameraObject::UpdateEditorSelection()
+{
+	if ( !m_pCamera )
+	{
+	}
+	else
+	{
+		switch ( GetDescription()->nCameraType )
+		{
+			case ECameraType_Player:
+			{
+				CPlayerCamera* pPlayerCamera = (CPlayerCamera*)m_pCamera;
+				pPlayerCamera->SetMaxX( GetDescription()->vMax.x );
+				pPlayerCamera->SetMaxY( GetDescription()->vMax.y );
+				pPlayerCamera->SetMinX( GetDescription()->vMin.x );
+				pPlayerCamera->SetMinY( GetDescription()->vMin.y );
+				pPlayerCamera->SetOffset( GetDescription()->vOffset );
+			}
+			break;
+
+			case ECameraType_MoveToPosition:
+			{
+				CLookAtCamera* pLookAtCamera = (CLookAtCamera*)m_pCamera;
+				pLookAtCamera->SetTarget( GetDescription()->vPosition + GetDescription()->vOffset );
+				pLookAtCamera->SetLookAtTime( GetDescription()->fTime );
+			}
+			break;
+		}
+	}
+}
+
+void CCameraObject::RenderEditorSelection()
+{
+	VECTOR vWindowSize;
+	VECTOR vWindowMin, vWindowMax;
+	vWindowSize = GetGameEngine()->GetView()->GetViewSize();
+	GetGameEngine()->GetView()->GetViewableBoundingBox( vWindowMin, vWindowMax );
+
+	VECTOR vPos = GetPosition() + GetDescription()->vOffset;
+	CRender2d::DrawCircle( vPos, 20.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+	VECTOR vMin = GetDescription()->vMin + vWindowSize * 0.5f;
+	VECTOR vMax = GetDescription()->vMax + vWindowSize * 0.5f;
+
+	vMin.x = Math::Max( vMin.x, vWindowMin.x - 5.0f );
+	vMin.y = Math::Max( vMin.y, vWindowMin.y - 5.0f );
+	vMax.x = Math::Min( vMax.x + vWindowSize.x, vWindowMax.x + 5.0f );
+	vMax.y = Math::Min( vMax.y + vWindowSize.y, vWindowMax.y + 5.0f );
+
+	{
+		VECTOR vPos = ( vMax + vMin ) * 0.5f;
+		VECTOR vExtents = ( vMax - vMin ) * 0.5f;
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+	}
+}
+
+std::string CCameraObject::GetCameraName()
+{
+	CHAR buf[100];
+	sprintf_s( buf, 100, "%d", GetDescription()->nUniqueActorId );
+	std::string strId = "Camera_";
+	strId += buf;
+	return strId;
+}

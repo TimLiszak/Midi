@@ -1,0 +1,99 @@
+#include "StdAfx.h"
+#include "InputMovement.h"
+#include "Character.h"
+#include "CharacterPhysics.h"
+#include "GameMain.h"
+#include "TileSet.h"
+
+static const FLOAT	ACCELERATION = 20.0f;
+static const FLOAT	MAX_SPEED = 360.0f;
+
+void CInputMovement::Init()
+{
+	m_fCurrentSpeed = 0.0f;
+	m_nDirection = 1;
+	m_fDisableAirMovement = 0.0f;
+    m_bWallJumping = FALSE;
+}
+
+void CInputMovement::Update( const FLOAT fFrameTime )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+	if ( pChar->IsDead() ) 
+	{
+		return;
+	}
+
+	VECTOR vPos = pChar->GetTargetPosition();
+
+	CCharacterInput* pInput = pChar->GetCharacterInput();
+
+	m_fDisableAirMovement -= fFrameTime;
+	m_fDisableAirMovement = Math::Max( m_fDisableAirMovement, 0.0f );
+
+	BOOL bDisable = m_fDisableAirMovement > 0.0f && !pChar->GetCharacterState()->IsOnGround() ;
+	if ( !bDisable )
+	{
+		if ( pInput->IsRunning() )
+		{
+			FLOAT fXAxis = pInput->GetRunDirection();
+            FLOAT fScale = GetSlopeScale( fXAxis );
+
+            if ( fXAxis > 0.0f )
+			{
+				pChar->GetPhysics()->AddForceX( ACCELERATION, MAX_SPEED * fXAxis * fScale );
+				m_nDirection = 1;
+			}
+			else
+			{
+				pChar->GetPhysics()->AddForceX( -ACCELERATION, MAX_SPEED * -fXAxis * fScale );
+				m_nDirection = -1;
+			}
+            m_bWallJumping = FALSE;
+		}
+		else
+		{
+            if( !m_bWallJumping )
+            {
+			    pChar->GetPhysics()->StopX();
+            }
+		}
+	}	
+	pChar->SetTargetPosition( vPos );
+}
+
+void CInputMovement::Term()
+{
+}
+
+FLOAT CInputMovement::GetSlopeScale( FLOAT fXAxis )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+    CTileProperties* pProp = pChar->GetCharacterState()->GetGroundTileProperties();
+  
+    if ( pProp )
+    {
+        if ( fXAxis > 0.0f )
+	    {
+            switch( pProp->nCollision )
+            {
+                case ETileCollision_Slope_TL_BR:
+                    return 1.2f;
+                case ETileCollision_Slope_BL_TR:
+                    return 0.7f;
+            }
+        }
+        else
+        {
+            switch( pProp->nCollision )
+            {
+                case ETileCollision_Slope_BL_TR:
+                    return 1.2f;
+                case ETileCollision_Slope_TL_BR:
+                    return 0.7f;
+            }
+        }
+    }
+
+    return 1.0f;
+}

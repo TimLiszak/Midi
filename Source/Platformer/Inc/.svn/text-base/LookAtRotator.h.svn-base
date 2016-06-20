@@ -1,0 +1,97 @@
+#ifndef _LOOK_AT_ROTATOR_H_
+#define _LOOK_AT_ROTATOR_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class CLookAtRotatorDescription : public COutputterDescription
+{
+public:
+	CLookAtRotatorDescription() : COutputterDescription(), 
+		fMoveSpeed( 90.0f ),
+		fAngleOffset( 0.0f ),
+        fLimitMin( -180.0f ),
+        fLimitMax( 180.0f )
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+	}
+	REFLECTION_INFO;
+
+	FLOAT	fAngleOffset;
+	FLOAT	fMoveSpeed;
+    FLOAT   fLimitMin;
+    FLOAT   fLimitMax;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fAngleOffset );
+		Serializer->Serialize( fMoveSpeed );
+
+
+        if ( Serializer->GetVersion() >= EFileVersion_LookAtRotator )
+        {
+		    Serializer->Serialize( fLimitMin );
+		    Serializer->Serialize( fLimitMax );
+        }
+
+	}
+};
+
+inline void CLookAtRotatorDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+	REGISTER( REF_FLOAT, fAngleOffset );
+	REGISTER_LIMIT( REF_FLOAT, fLimitMin, -180.0f, 180.0f );
+	REGISTER_LIMIT( REF_FLOAT, fLimitMax, -180.0f, 180.0f );
+	REGISTER_LIMIT( REF_FLOAT, fMoveSpeed, 0.0f, 99999.0f );
+}
+
+class CLookAtRotator : public COutputter
+{
+public:
+	typedef CLookAtRotatorDescription ActorDescription;
+
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_LookAtRotator; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	FLOAT	m_fCurrentAngle;
+
+private:
+	CLookAtRotatorDescription* GetDescription() { return (CLookAtRotatorDescription*)m_pDescription; }
+
+};
+
+inline BOOL CLookAtRotator::CanSelectActor( CActor* pActor )
+{
+	return pActor->IsRotatable();
+}
+
+#endif

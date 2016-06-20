@@ -1,0 +1,24 @@
+
+#ifndef _PROJECTILE_MANAGER_H_
+#define _PROJECTILE_MANAGER_H_
+
+#include "Projectile.h"
+#include "GameMain.h"
+
+class CProjectileManager
+{
+public:
+	void	Init();
+	void	Term();
+	void	Reset();
+
+	void	Update( const FLOAT fFrameTime );
+
+	void	CreateProjectile( VECTOR vPos, VECTOR vVelocity, FLOAT fLifeTime, EPolarity ePolarity );
+
+protected:
+	std::list< CProjectile* >	m_Projectiles;
+};
+
+#endif
+

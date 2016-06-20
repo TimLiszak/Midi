@@ -1,0 +1,114 @@
+#include "StdAfx.h"
+#include "TilePropertiesTool.h"
+#include "TileSet.h"
+#include "TileSetMapping.h"
+#include "Input.h"
+#include "ReflectableEditor.h"
+#include "World.h"
+#include "TileMap.h"
+#include "Level.h"
+
+static const VECTOR		PRINT_POSITION( 0.0f, 22.0f );
+
+void CTilePropertiesTool::Init( CTileSet* pTileSet )
+{
+	m_pTileSet =(CTileSetMapping*) pTileSet;
+	m_pMasterTileSet = m_pTileSet->GetMasterTileSet();
+
+	TileSelection.Init( pTileSet, VECTOR( 6, 8 ), VECTOR( 10.0f, 30.0f ), FALSE );
+	MasterTileSelection.Init( m_pMasterTileSet, VECTOR( 10, 8 ), VECTOR( 250.0f, 30.0f ), FALSE );
+	m_pLastSelection = NULL;
+
+	m_nDragTile = -1;
+}
+
+void CTilePropertiesTool::Term()
+{
+	TileSelection.Term();
+	MasterTileSelection.Term();
+}
+
+void CTilePropertiesTool::Update( CEditor::SMouseState* pMouseState )
+{
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+
+	CTileSelection::EResult eResult1 = TileSelection.Update();
+	CTileSelection::EResult eResult2 = MasterTileSelection.Update();
+
+	if ( eResult1 == CTileSelection::EResult_SelectTile )
+	{
+		m_pLastSelection = &TileSelection;
+	}
+	if ( eResult2 == CTileSelection::EResult_SelectTile )
+	{
+		m_pLastSelection = &MasterTileSelection;
+		m_nDragTile = MasterTileSelection.GetSelectedTile();
+	}
+
+	if ( m_nDragTile >= 0 && pMouse->IsMouseReleased( EMouseButton_Left ) )
+	{
+		if ( eResult1 == CTileSelection::EResult_MouseOver )
+		{
+			INT nIndex = TileSelection.GetMouseOverTile();
+			if ( pKey->IsKeyDown( EKbKey_SHIFT ) )
+			{
+				CTileProperties* pProp = m_pTileSet->GetTileProperties( nIndex );
+				pProp->nAlternateTileId = m_nDragTile;
+			}
+			else
+			{
+				m_pTileSet->SetTileMap( nIndex, m_nDragTile );
+			}
+		}
+		m_nDragTile = -1;
+	}
+
+	if ( TileSelection.GetSelectedTile() >= 0 )
+	{
+		CTileProperties* pProp = m_pTileSet->GetTileProperties( TileSelection.GetSelectedTile() );
+        if ( pProp )
+        {
+		    GetGameEngine()->GetReflectableEditor()->SetObject( pProp, PRINT_POSITION );
+        }
+	}
+	else
+	{
+		GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+	}
+
+	if ( m_pLastSelection )
+	{
+		m_pLastSelection->UpdateTabPage();
+	}
+
+
+	if ( eResult1 == CTileSelection::EResult_None &&
+		 eResult2 == CTileSelection::EResult_None )
+	{
+		if ( pMouse->IsMouseDown( EMouseButton_Left ) )
+		{
+			VECTOR vPos = pMouseState->vEnd[EMouseButton_Left];
+			if ( pKey->IsKeyDown( EKbKey_SHIFT ) )
+			{
+				TileSelection.SetSelectedTile( GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTile( vPos ) );
+			}
+		}
+	}
+
+}
+
+void CTilePropertiesTool::Render( CEditor::SMouseState* pMouseState )
+{
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseScreenPosition();
+
+	TileSelection.Render();
+	MasterTileSelection.Render();
+
+	if ( m_nDragTile >= 0 )
+	{
+		vMousePos.x -= m_pMasterTileSet->GetTileWidth() * 0.5f;
+		vMousePos.y -= m_pMasterTileSet->GetTileHeight() * 0.5f;
+		m_pMasterTileSet->DrawTile( m_nDragTile, vMousePos, FALSE );
+	}
+}

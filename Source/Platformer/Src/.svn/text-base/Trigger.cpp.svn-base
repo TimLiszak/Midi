@@ -1,0 +1,187 @@
+#include "StdAfx.h"
+#include "Trigger.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "CameraManager.h"
+#include "ProximityTrigger.h"
+
+CReflectInfo CTriggerDescription::m_ref_info; 
+
+CTrigger::CTrigger() : COutputter()
+{
+	m_bTriggered = FALSE;
+	m_bTriggerOn = FALSE;
+	m_pDrawConnectionObject = NULL;
+	m_bFindConnectionObject = TRUE;
+}
+
+void CTrigger::InitActor( const ActorDescription* pDesc )
+{
+	m_bTriggered = FALSE;
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+	m_bTriggerOn = !pDesc->bEnable;
+	m_bFindConnectionObject = TRUE;
+}
+
+void CTrigger::Reset()
+{
+	if ( !GetDescription()->bPermenent )
+	{
+		m_bTriggered = FALSE;
+		m_bTriggerOn = !GetDescription()->bEnable;
+	}
+}
+
+void CTrigger::MoveActorGroup( VECTOR vMove )
+{
+	//GetDescription()->vTriggerPosition += vMove;
+}
+
+void CTrigger::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void CTrigger::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+
+	if ( m_bFindConnectionObject && GetDescription()->nDrawConnection > 0 )
+	{
+		m_pDrawConnectionObject = GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( GetDescription()->nDrawConnection );
+		m_bFindConnectionObject = FALSE;
+	}
+
+	if ( GetDescription()->bOneTime && m_bTriggered )
+	{
+		// Only trigger once
+		return;
+	}
+
+	m_listTriggerIds.clear();
+	if ( CheckTrigger( m_listTriggerIds ) )
+	{
+		TriggerActors( GetDescription()->bEnable );
+		m_bTriggered = TRUE;
+	}
+	else if ( DoOppositeTrigger() )
+	{
+		TriggerActors( !GetDescription()->bEnable );
+	}
+}
+
+void CTrigger::TriggerActors( BOOL bEnable )
+{
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		if ( m_listTriggerIds.size() > 0 )
+		{
+			std::list<INT>::iterator it2;
+			for ( it2 = m_listTriggerIds.begin() ; it2 != m_listTriggerIds.end(); it2++ )
+			{
+				sInfo.pActor->SetEnabled( bEnable, *it2 );
+			}
+		}
+		else
+		{
+			sInfo.pActor->SetEnabled( bEnable );
+		}
+	}
+	m_bTriggerOn = bEnable;
+}
+
+void CTrigger::Render()
+{
+	if ( GetDescription()->bVisible || GetGameEngine()->CanShowEditorVisibleObjects() )
+	{
+		COLOUR_RGB LightClr;
+		if ( m_bTriggerOn )
+		{
+			LightClr = COLOUR_RGB( 1.0f, 1.0f, 0.0f, 0.5f );
+		}
+		else
+		{
+			LightClr = COLOUR_RGB( 1.0f, 1.0f, 1.0f, 0.5f );
+		}
+
+		// Draw cone
+		if ( GetDescription()->fConeLength > 0.0f )
+		{
+			const UINT NUM_SEGMENTS = 20;
+			FLOAT fAngle = -GetDescription()->fConeAngle;
+			for( UINT i = 0; i < NUM_SEGMENTS; i++ )
+			{
+				VECTOR vDir = Math::GetDirectionD( 180.0f - fAngle );
+				CRender2d::DrawLine( m_vPosition, m_vPosition + vDir * GetDescription()->fConeLength, LightClr );
+
+				fAngle += GetDescription()->fConeAngle * 2.0f / (FLOAT)NUM_SEGMENTS;
+			}
+		}
+
+
+		// Draw trigger
+		if ( GetDescription()->ePolarity == EPolarity_Neutral )
+		{
+			CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+		}
+		else
+		{
+			COLOUR_RGB Clr = GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity );
+			CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, Clr );
+		}
+
+		// Draw light
+		CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y * 0.8f, LightClr );
+
+		if ( m_pDrawConnectionObject )
+		{
+			if ( m_bTriggerOn )
+			{
+				CRender2d::DrawLine( m_vPosition, m_pDrawConnectionObject->GetPosition(), LightClr );
+			}
+		}
+	}
+}
+
+void CTrigger::CreateComponents() 
+{
+}
+
+void CTrigger::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CTriggerDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CTrigger::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+		m_bFindConnectionObject = TRUE;
+	}
+}
+
+void CTrigger::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+
+	VECTOR vPos = GetDescription()->vTriggerOffset + GetPosition();
+	CRender2d::DrawCircle( vPos, GetDescription()->fTriggerRadius, COLOUR_RGB( 0.6f, 0.6f, 0.6f ) );
+}

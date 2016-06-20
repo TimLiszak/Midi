@@ -1,0 +1,54 @@
+#include "StdAfx.h"
+#include "ProjectileManager.h"
+#include "Projectile.h"
+#include "World.h"
+#include "View.h"
+#include "DebugPrint.h"
+#include "ActorGroups.h"
+
+void CProjectileManager::Init()
+{
+}
+void CProjectileManager::Term()
+{
+	Reset();
+}
+
+void CProjectileManager::Reset()
+{
+	std::list<CProjectile*>::iterator it;
+	for ( it = m_Projectiles.begin() ; it != m_Projectiles.end(); it++ )
+	{
+		GetGameEngine()->GetWorld()->ReleaseActor( *it );
+	}
+	m_Projectiles.clear();
+}
+
+void CProjectileManager::CreateProjectile( VECTOR vPos, VECTOR vVelocity, FLOAT fLifeTime, EPolarity ePolarity )
+{
+	CProjectile* pProj = GetGameEngine()->GetWorld()->SpawnActor<CProjectile>( EActorGroup_Projectile, vPos, VECTOR(5.0f, 5.0f) );
+	pProj->SetVelocity( vVelocity );
+	pProj->SetLifeTime( fLifeTime );
+	pProj->SetPolarity( ePolarity );
+	
+	m_Projectiles.push_back( pProj );
+}
+
+void CProjectileManager::Update( const FLOAT fFrameTime )
+{
+	//GetGameEngine()->GetDebugPrint()->Printf( "# projectiles %d\n", m_Projectiles.size() );
+
+	std::list<CProjectile*>::iterator it;
+	for ( it = m_Projectiles.begin() ; it != m_Projectiles.end(); )
+	{
+		if ( (*it)->CanRemove() )
+		{
+			GetGameEngine()->GetWorld()->ReleaseActor( *it );
+			it = m_Projectiles.erase( it );
+		}
+		else
+		{
+			it++;
+		}
+	}
+}

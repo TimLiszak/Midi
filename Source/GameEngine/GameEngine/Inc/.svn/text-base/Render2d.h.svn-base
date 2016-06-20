@@ -1,0 +1,68 @@
+#ifndef _RENDER2D_H_
+#define _RENDER2D_H_
+
+class CTexture
+{
+public:
+	UINT	nTexId;
+	FLOAT	fWidth;
+	FLOAT	fHeight;
+};
+
+class CRender2d
+{
+public:
+	struct UV
+	{
+		UV() :
+			u0(0.0f), v0(0.0f),
+			u1(1.0f), v1(1.0f) 
+		{
+		}
+
+
+		UV( FLOAT _u0, FLOAT _v0,
+			FLOAT _u1, FLOAT _v1 ): 
+				u0(_u0), v0(_v0),
+				u1(_u1), v1(_v1) 
+		{
+		}
+
+		FLOAT u0;
+		FLOAT v0;
+		FLOAT u1;
+		FLOAT v1;
+	};
+
+	static void		Init2dRender( VECTOR vSize );
+	static void		ClearScreen( COLOUR_RGB clr );
+
+	static void		BuildFont( HDC hDC );
+	static void		KillFont();
+	static void		Print(const char *fmt, ...);
+
+	static void		DrawPoint( VECTOR vPoint1, COLOUR_RGB clr );
+	static void		DrawLine( VECTOR vPoint1, VECTOR vPoint2, COLOUR_RGB clr, FLOAT fWidth = 1.0f );
+	static void		DrawRect( VECTOR vPosition, VECTOR vExtents, FLOAT fRotation, COLOUR_RGB clr );
+	static void		DrawRectFill( VECTOR vPosition, VECTOR vExtents, FLOAT fRotation, COLOUR_RGB clr, const UV* pUV = NULL );
+	static void		DrawRectOutline( VECTOR vPosition, VECTOR vExtents, FLOAT fRotation, COLOUR_RGB clr, COLOUR_RGB clr2 );
+	static void		DrawRect2( VECTOR vPoint1, VECTOR vPoint2, FLOAT fWidth, COLOUR_RGB clr );
+
+	static void		DrawCircle( VECTOR vPoint, FLOAT fRadius, COLOUR_RGB clr );
+	static void		DrawCircleFill( VECTOR vPoint, FLOAT fRadius, COLOUR_RGB clr );
+	static void		DrawCircleOutline( VECTOR vPoint, FLOAT fRadius, COLOUR_RGB clr, COLOUR_RGB clr2 );
+	static void		DrawTriangle( VECTOR vPoint1, VECTOR vPoint2, VECTOR vPoint3, COLOUR_RGB clr );
+
+	static void		DrawEllipse( VECTOR vPoint, VECTOR vExtents, COLOUR_RGB clr );
+	static void		DrawEllipseFill( VECTOR vPoint, VECTOR vExtents, COLOUR_RGB clr );
+	static void		DrawEllipseOutline( VECTOR vPoint, VECTOR vExtents, COLOUR_RGB clr, COLOUR_RGB clr2 );
+
+	static void		BindTexture( CTexture* pTexture );
+	static void		EndTexture();
+
+private:
+	static GLuint		uFontBase;
+	static BOOL			m_bEnableTexture;
+};
+
+#endif

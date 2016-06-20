@@ -1,0 +1,64 @@
+#include "StdAfx.h"
+#include "ConveyorBelt.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "SpriteInfo.h"
+
+CReflectInfo CConveyorBeltDescription::m_ref_info; 
+
+CActor*	CConveyorBelt::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CConveyorBelt>();
+}
+
+void CConveyorBelt::InitActor( const ActorDescription* pDesc )
+{
+}
+
+void CConveyorBelt::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CConveyorBelt::Render()
+{
+	VECTOR vP1 = GetPosition() - GetExtents();
+	VECTOR vP2 = vP1 + VECTOR( GetExtents().x * 2.0f, 0.0f );
+	CRender2d::DrawLine( vP1, vP2, COLOUR_RGB(0.5f,0.5f,0.5f) );
+}
+
+void CConveyorBelt::CreateComponents() 
+{
+}
+
+void CConveyorBelt::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CConveyorBeltDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+FLOAT CConveyorBelt::GetSpeed( EPolarity ePolarity )
+{
+	if ( ePolarity == EPolarity_Red )
+	{
+		return GetDescription()->fSpeed * GetDescription()->nDirectionRed;
+	}
+	else if ( ePolarity == EPolarity_Blue )
+	{
+		return GetDescription()->fSpeed * GetDescription()->nDirectionBlue;
+	}
+	ASSERT( FALSE );
+	return 0.0f;
+}
+

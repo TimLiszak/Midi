@@ -1,0 +1,53 @@
+
+#ifndef _PROJECTILE_H_
+#define _PROJECTILE_H_
+
+#include "DynamicActor.h"
+#include "GameMain.h"
+
+class CProjectile : public CDynamicActor
+{
+public:
+
+	void	InitActor( const CActorDescription* pDesc );
+	virtual CActor*	GetNewInstance();
+
+	virtual ~CProjectile() {}
+
+	virtual void Render();
+
+	void	SetVelocity( VECTOR vVel );
+	void	SetLifeTime( FLOAT fLifeTime );
+	void	SetPolarity( EPolarity ePolarity );
+	EPolarity	GetPolarity();
+
+	BOOL	CanRemove();
+
+protected:
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	CreateComponents();
+	virtual void	UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget );
+
+	class CLinearMovement*	m_pMovement;
+
+	FLOAT	m_fLifeTime;
+	EPolarity	m_ePolarity;
+};
+
+inline void CProjectile::SetLifeTime( FLOAT fLifeTime )
+{
+	m_fLifeTime = fLifeTime;
+}
+
+inline void CProjectile::SetPolarity( EPolarity ePolarity )
+{
+	m_ePolarity = ePolarity;
+}
+
+inline EPolarity CProjectile::GetPolarity()
+{
+	return m_ePolarity;
+}
+
+#endif
+

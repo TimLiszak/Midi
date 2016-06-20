@@ -1,0 +1,60 @@
+
+#ifndef _INPUT_MOVEMENT_H_
+#define _INPUT_MOVEMENT_H_
+
+#include "Actor.h"
+
+class CInputMovement : public CActorComponent
+{
+public:
+	CInputMovement( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CInputMovement() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+	INT		GetDirection();
+    void    SetDirection( INT nDirection );
+    void    StartWallJump();
+    void    StopWallJump();
+
+	void	DisableAirMovement( FLOAT fTime );
+
+protected:
+    FLOAT   GetSlopeScale( FLOAT fXAxis );
+
+	FLOAT	m_fCurrentSpeed;
+	INT		m_nDirection;
+	FLOAT	m_fDisableAirMovement;
+    BOOL    m_bWallJumping;
+
+};
+
+inline INT CInputMovement::GetDirection()
+{
+	return m_nDirection;
+}
+
+inline void CInputMovement::SetDirection( INT nDirection )
+{
+    m_nDirection = nDirection;
+}
+
+inline void CInputMovement::DisableAirMovement( FLOAT fTime )
+{
+	m_fDisableAirMovement = fTime;
+}
+
+inline void CInputMovement::StartWallJump()
+{
+    m_bWallJumping = TRUE;
+}
+
+inline void CInputMovement::StopWallJump()
+{
+    m_bWallJumping = FALSE;
+}
+
+#endif
+

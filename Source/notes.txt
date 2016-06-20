@@ -1,0 +1,8 @@
+Bugs
+- Elevator collision floating above
+
+
+
+Editor Improvements
+- selecting object 's' - control to add to current selection 
+- retangle player triggers

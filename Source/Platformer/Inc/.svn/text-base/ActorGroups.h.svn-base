@@ -1,0 +1,14 @@
+#ifndef _ACTOR_GROUPS_H_
+#define _ACTOR_GROUPS_H_
+
+enum EActorGroups
+{
+	EActorGroup_Character,
+	EActorGroup_Obstacle,
+	EActorGroup_Projectile,
+	EActorGroup_NoCollision,
+
+	EActorGroup_Max
+};
+
+#endif

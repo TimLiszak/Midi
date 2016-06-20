@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D8942C13-FCF9-4FAD-AC33-F1526E0D0564}</ProjectGuid>
+    <RootNamespace>CombatPrototype</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>false</UseOfAtl>
+    <CharacterSet>MultiByte</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/Lesson3.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\porttime;..\pm_common;..\GameEngine\GameEngine\Inc;.\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>Stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\Debug/GameEngine.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x1009</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;dxguid.lib;dinput8.lib;comctl32.lib;..\Debug\portmidi_s.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Debug/Platformer.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>.\Debug;..\GameEngine\GameEngine\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;MSVCP90D;msvcprtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AssemblyDebug>true</AssemblyDebug>
+      <ProgramDatabaseFile>.\Debug/BlankGame.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/BlankGame.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/Lesson3.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\GameEngine\GameEngine\Inc;.\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Release/GameEngine.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DisableSpecificWarnings>4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x1009</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;odbc32.lib;odbccp32.lib;dxguid.lib;dxerr.lib;dinput8.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Release/Platformer.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>.\Release;..\GameEngine\GameEngine\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;MSVCP90D;msvcprtd;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Release/BlankGame.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/BlankGame.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Actor.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Camera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\CameraManager.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Collision.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\CoopCamera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugCamera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugPrint.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugTrace.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DynamicActor.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileReader.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileSerializer.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileVersion.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameEngine.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameEnginePCH.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Gamepad.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameSettings.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Input.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Keyboard.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Level.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\LookAtCamera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\MathDefs.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Mouse.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\PlayerCamera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Reflectable.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\ReflectableEditor.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Render2d.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Serializer.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Sprite.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\SpriteInfo.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\SpriteManager.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\StdAfx.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TextParser.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TextureManager.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileMap.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSet.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetBitmap.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetList.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetMapping.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TransitionCamera.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TypeDefs.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Vector2d.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\View.h" />
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\World.h" />
+    <ClInclude Include="Inc\FretNote.h" />
+    <ClInclude Include="Inc\MidiControllerGuitar.h" />
+    <ClInclude Include="Inc\MidiOutput.h" />
+    <ClInclude Include="Inc\Note.h" />
+    <ClInclude Include="Inc\Piano.h" />
+    <ClInclude Include="Inc\PianoKey.h" />
+    <ClInclude Include="Inc\Tuning.h" />
+    <ClInclude Include="Inc\Window.h" />
+    <ClInclude Include="Inc\Workspace.h" />
+    <ClInclude Include="Inc\Fretboard.h" />
+    <ClInclude Include="Inc\MidiController.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Actor.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Camera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\CameraManager.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Collision.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\CoopCamera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugCamera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugPrint.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugTrace.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DynamicActor.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\FileReader.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\FileSerializer.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\GameEngine.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Gamepad.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\GameSettings.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Input.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Keyboard.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Level.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\LookAtCamera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Mouse.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\PlayerCamera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Reflectable.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\ReflectableEditor.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Render2d.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Serializer.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Sprite.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\SpriteInfo.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\SpriteManager.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TextParser.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TextureManager.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileMap.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSet.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetBitmap.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetList.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetMapping.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TransitionCamera.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Vector2d.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\View.cpp" />
+    <ClCompile Include="..\GameEngine\GameEngine\Src\World.cpp" />
+    <ClCompile Include="Src\FretNote.cpp" />
+    <ClCompile Include="Src\MidiControllerGuitar.cpp" />
+    <ClCompile Include="Src\MidiOutput.cpp" />
+    <ClCompile Include="Src\Note.cpp" />
+    <ClCompile Include="Src\Piano.cpp" />
+    <ClCompile Include="Src\PianoKey.cpp" />
+    <ClCompile Include="Src\Tuning.cpp" />
+    <ClCompile Include="Src\Window.cpp" />
+    <ClCompile Include="Src\Workspace.cpp" />
+    <ClCompile Include="Src\Fretboard.cpp" />
+    <ClCompile Include="Src\main.cpp" />
+    <ClCompile Include="Src\MidiController.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="Resource.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

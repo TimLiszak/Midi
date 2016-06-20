@@ -1,0 +1,39 @@
+#include "StdAfx.h"
+
+#include "GameMain.h"
+#include "DebugLevelMenu.h"
+
+#include "GameEngine.h"
+#include "..\resource.h"
+
+#include "FileSerializer.h"
+
+#include "Turret.h"
+#include "Laser.h"
+
+
+int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
+					HINSTANCE	hPrevInstance,		// Previous Instance
+					LPSTR		lpCmdLine,			// Command Line Parameters
+					int			nCmdShow)			// Window Show State
+{
+	UNUSED(hInstance);
+	UNUSED(hPrevInstance);
+	UNUSED(lpCmdLine);
+	UNUSED(nCmdShow);
+
+	CDebugLevelMenu* pGameMode = new CDebugLevelMenu();
+	//CGameMain* pGameMode = new CGameMain();
+
+	BOOL bSuccess = GetGameEngine()->Init( "", 854, 480, IDR_MENU1 );
+	if ( !bSuccess )
+	{
+		return 0;
+	}
+
+	GetGameEngine()->Run( pGameMode );
+
+	GetGameEngine()->Term();
+		
+	return 0;							
+}

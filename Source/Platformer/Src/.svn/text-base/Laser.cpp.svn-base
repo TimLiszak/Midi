@@ -1,0 +1,157 @@
+#include "StdAfx.h"
+#include "Laser.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "ProjectileManager.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "Character.h"
+#include "TileMap.h"
+
+CReflectInfo CLaserDescription::m_ref_info; 
+
+CActor*	CLaser::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CLaser>();
+}
+
+void CLaser::InitActor( const ActorDescription* pDesc )
+{
+	m_bHitCharacter = FALSE;
+	m_fHitPosition = 1.0f;
+	m_fCurrentRotation = pDesc->fAngle;
+
+	m_bEnabled = pDesc->bStartEnabled;
+	m_bWasEnabled = FALSE;
+	m_fFlashTime = pDesc->fFlashTime;
+	m_bFlash = FALSE;
+}
+
+void CLaser::Reset()
+{
+	m_bHitCharacter = FALSE;
+	m_fHitPosition = 1.0f;
+	m_fCurrentRotation = GetDescription()->fAngle;
+	m_bEnabled = GetDescription()->bStartEnabled;
+	m_bWasEnabled = FALSE;
+	m_fFlashTime = GetDescription()->fFlashTime;
+	m_bFlash = FALSE;
+}
+
+void CLaser::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CLaser::UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget )
+{
+	m_bHitCharacter = FALSE;
+    m_fHitPosition = 1.0f;
+
+	if ( m_bEnabled )
+	{
+		if ( m_fFlashTime > 0.0f )
+		{
+			m_fFlashTime -= GetGameEngine()->GetFrameTime();
+			Math::Max( m_fFlashTime, 0.0f );
+		}
+		else
+		{
+			VECTOR vDir = Math::GetDirectionD( m_fCurrentRotation );
+			vDir = vDir * GetDescription()->fLength;
+
+			VECTOR vP1 = vTarget;
+			VECTOR vP2 = vTarget + vDir;
+
+            if ( GetDescription()->bTileCollide )
+            {
+                CCollision::SweepResult sResult;
+                if ( GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->CheckLineCollision( sResult, vP1, vP2 ) )
+                {
+                    FLOAT fNewLength = ( sResult.vResult - vP1 ).GetLength();
+                    vP2 = sResult.vResult;
+
+                    m_bHitCharacter = TRUE;
+                    m_fHitPosition = fNewLength / GetDescription()->fLength;
+                }
+            }
+
+			// Check collision
+			FLOAT fT = 1.0f;
+			UINT uGroupsMask = 1 << EActorGroup_Character;
+			CActor* pResult = NULL;
+			if ( GetGameEngine()->GetWorld()->CheckLineCollision( pResult, vP1, vP2, uGroupsMask, fT ) )
+			{
+				CCharacter* pChar = (CCharacter*)pResult;
+				ASSERT( pChar );
+				if ( pChar->GetPolarity() == (EPolarity)GetDescription()->ePolarity )
+				{
+					m_bHitCharacter = TRUE;
+					m_fHitPosition = fT * m_fHitPosition;
+				}
+				pChar->TakeHit( (EPolarity)GetDescription()->ePolarity );
+			}
+		}
+	}
+	else
+	{
+		m_fFlashTime = GetDescription()->fFlashTime;
+	}
+
+	SetPosition( vTarget );
+}
+
+void CLaser::Render()
+{
+	VECTOR vDir = Math::GetDirectionD( m_fCurrentRotation );
+	vDir = vDir * GetDescription()->fLength;
+	COLOUR_RGB Clr = COLOUR_RGB(0.5f,0.5f,0.5f);
+
+	if ( m_bEnabled )
+	{
+		if ( m_fFlashTime > 0.0f )
+		{
+			m_bFlash = !m_bFlash;
+			if ( m_bFlash )
+			{
+				Clr = GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity );
+			}
+		}
+		else
+		{
+			if ( m_bHitCharacter )
+			{
+				CRender2d::DrawLine( m_vPosition, m_vPosition + vDir * m_fHitPosition, GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity ), 3.0f );
+			}
+			else
+			{
+				CRender2d::DrawLine( m_vPosition, m_vPosition + vDir, GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity ), 3.0f );
+			}
+		}
+	}
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, Clr );
+}
+
+void CLaser::CreateComponents() 
+{
+}
+
+void CLaser::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CLaserDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CLaser::UpdateEditorSelection()
+{
+	SetRotation( GetDescription()->fAngle );
+}

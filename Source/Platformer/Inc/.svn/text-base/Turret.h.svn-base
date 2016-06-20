@@ -1,0 +1,116 @@
+#ifndef _TURRET_H_
+#define _TURRET_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "Projectile.h"
+#include "GameMain.h"
+
+class CTurretDescription : public CActorDescription
+{
+public:
+	CTurretDescription() : CActorDescription(), 
+		fAngle( 0.0f ),
+		fStartTime( 0.0f ),
+		fMaxTime( 0.15f ),
+		ePolarity( EPolarity_Red ),
+		fBulletSpeed( 300.0f ),
+		fBulletLifetime( 0.7f ),
+		nNumBullets( 1 ),
+		fSpread( 45.0f ),
+		bStartEnabled( TRUE )
+	{
+		uGroup = EActorGroup_NoCollision;
+	}
+	REFLECTION_INFO;
+
+	FLOAT	fStartTime;
+	FLOAT	fMaxTime;
+	UINT	ePolarity;
+	FLOAT	fBulletSpeed;
+	FLOAT	fBulletLifetime;
+	FLOAT	fAngle;
+
+	UINT	nNumBullets;
+	FLOAT	fSpread;
+	BOOL	bStartEnabled;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fStartTime );
+		Serializer->Serialize( fMaxTime );
+		Serializer->Serialize( fBulletSpeed );
+		Serializer->Serialize( fBulletLifetime );
+		Serializer->Serialize( fAngle );
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( nNumBullets );
+		Serializer->Serialize( fSpread );
+		Serializer->Serialize( bStartEnabled );
+	}
+
+};
+
+inline void CTurretDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_ALL( REF_FLOAT, fStartTime, 0.0f, 99.0f, 0.05f );
+	REGISTER_ALL( REF_FLOAT, fMaxTime, 0.1f, 99.0f, 0.05f );
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 1 );
+	REGISTER_LIMIT( REF_FLOAT, fBulletSpeed, 0.0f, 9999.0f );
+	REGISTER_ALL( REF_FLOAT, fBulletLifetime, 0.0f, 99.0f, 0.005f );
+	REGISTER( REF_FLOAT, fAngle );
+	REGISTER( REF_UINT, nNumBullets );
+	REGISTER( REF_FLOAT, fSpread );
+	REGISTER_LIMIT( REF_UINT, bStartEnabled, 0, 1 );
+}
+
+class CTurret : public CRotatableLevelObject
+{
+public:
+	typedef CTurretDescription ActorDescription;
+
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Turret; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	SetRotation( FLOAT fAngle );
+	virtual FLOAT	GetRotation();
+
+	virtual void	UpdateEditorSelection();
+
+protected:
+	BOOL	IsInRange();
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+
+	FLOAT	m_fCurrentTime;
+
+	VECTOR	m_vBoundingMin;
+	VECTOR	m_vBoundingMax;
+
+private:
+	CTurretDescription* GetDescription() { return (CTurretDescription*)m_pDescription; }
+};
+
+inline void CTurret::SetRotation( FLOAT fAngle )
+{
+	m_fCurrentRotation = fAngle;
+}
+
+inline FLOAT CTurret::GetRotation()
+{
+	return m_fCurrentRotation;
+}
+
+#endif

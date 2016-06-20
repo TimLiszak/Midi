@@ -1,0 +1,77 @@
+#ifndef _OBJECT_GROUP_H_
+#define _OBJECT_GROUP_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class CObjectGroupDescription : public COutputterDescription
+{
+public:
+	CObjectGroupDescription() : COutputterDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+	}
+
+
+};
+
+inline void CObjectGroupDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+}
+
+class CObjectGroup : public COutputter
+{
+public:
+	typedef CObjectGroupDescription ActorDescription;
+
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual void	Reset();
+	virtual CLevelObject*	CopyObject();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_ObjectGroup; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	SetPosition( VECTOR vPos, BOOL bFromEditor = FALSE );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+
+private:
+	CObjectGroupDescription* GetDescription() { return (CObjectGroupDescription*)m_pDescription; }
+
+};
+
+inline BOOL CObjectGroup::CanSelectActor( CActor* pActor )
+{
+	return TRUE;
+}
+
+#endif

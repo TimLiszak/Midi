@@ -1,0 +1,106 @@
+#include "StdAfx.h"
+#include "Oscillator.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "CameraManager.h"
+#include "Input.h"
+#include "Character.h"
+#include "World.h"
+
+CReflectInfo COscillatorDescription::m_ref_info; 
+
+CActor*	COscillator::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<COscillator>();
+}
+
+void COscillator::InitActor( const ActorDescription* pDesc )
+{
+	m_bIsOn = FALSE;
+	m_fCurrentTime = pDesc->fDelay;
+
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+}
+
+void COscillator::Reset()
+{
+	m_bIsOn = FALSE;
+	m_fCurrentTime = GetDescription()->fDelay;
+}
+
+void COscillator::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void COscillator::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+	
+	if ( m_bEnabled )
+	{
+		m_fCurrentTime -= fFrameTime;
+		if ( m_fCurrentTime <= 0.0f )
+		{
+			m_bIsOn = !m_bIsOn;
+			if ( m_bIsOn )
+			{
+				m_fCurrentTime = GetDescription()->fOnTime;
+			}
+			else
+			{
+				m_fCurrentTime = GetDescription()->fOffTime;
+			}
+		}
+
+		// Apply to actors
+		std::list<SActorInfo>::iterator it;
+		for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+		{
+			SActorInfo& sInfo = (*it);
+			sInfo.pActor->SetEnabled( m_bIsOn );
+		}
+
+	}
+}
+
+void COscillator::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.8f,0.5f,0.5f) );
+}
+
+void COscillator::CreateComponents() 
+{
+}
+
+void COscillator::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new COscillatorDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void COscillator::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void COscillator::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+}

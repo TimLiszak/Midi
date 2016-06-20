@@ -1,0 +1,177 @@
+#include "StdAfx.h"
+#include "CharacterPhysics.h"
+#include "Character.h"
+#include "World.h"
+#include "ActorGroups.h"
+#include "Level.h"
+#include "JumpMovement.h"
+#include "CharacterState.h"
+#include "GravityModifier.h"
+
+static const FLOAT GRAVITY = 1440.0f;
+static const FLOAT	MAX_SPEED = 360.0f;
+
+static const FLOAT GROUND_FRICTION = 150.0f;
+static const FLOAT AIR_FRICTION = 100.0f;
+
+static const FLOAT WALL_SLIDE = 0.5f;
+static const FLOAT MAX_WALL_SLIDE = 200.0f;
+
+void CCharacterPhysics::Init()
+{
+	m_vVelocity.Set( 0.0f, 0.0f );
+}
+
+void CCharacterPhysics::Update( const FLOAT fFrameTime )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+	VECTOR vPos = pChar->GetTargetPosition();
+    INT nDownDir = pChar->GetDownDirection();
+    FLOAT fGravity = GRAVITY;
+    if ( pChar->GetGravityModifier() )
+    {
+        FLOAT fScale = pChar->GetGravityModifier()->GetGravityScale( pChar->GetPolarity() );
+        fGravity *= fScale;
+    }
+
+	if ( pChar->GetCharacterState()->IsOnGround() )
+	{
+		VECTOR vTestPos = vPos;
+		vTestPos.y += 1.0f * nDownDir;
+
+		// If we are on the ground, check if we are no longer
+		UINT uGroupsMask = 0xFFFFFFFF;
+		uGroupsMask ^= 1 << EActorGroup_NoCollision;
+		CCollision::SweepResult sResult;
+		if ( !GetGameEngine()->GetWorld()->GetLevel()->CheckSweepCollision( sResult, pChar->GetExtents(), vPos, vTestPos, uGroupsMask ) )
+		{
+			pChar->GetCharacterState()->FallOffEdge();
+		}
+		else
+		{
+			if ( sResult.pActor && sResult.pActor->IsDynamic() )
+			{
+				CDynamicActor* pDynamicActor = (CDynamicActor*)sResult.pActor;
+				vPos += pDynamicActor->GetVelocity();
+			}
+            else
+            {
+                vPos = sResult.vResult;
+            }
+
+            pChar->GetCharacterState()->SetOnGround( sResult.pTileProperties );
+			pChar->CheckCollisionActor( sResult, vPos );
+		}
+	}
+
+	if ( pChar->GetAttachedActor() )
+	{
+		CDynamicActor* pDynamicActor = pChar->GetAttachedActor();
+		vPos += pDynamicActor->GetVelocity();
+		pChar->AttachToActor( NULL );
+	}
+
+	vPos += m_vVelocity * fFrameTime;
+
+	FLOAT xFriction = 0.0f;
+
+	if ( !pChar->GetCharacterState()->IsOnGround() )
+	{
+		if ( pChar->GetCharacterState()->IsOnWall() && m_vVelocity.y > 0 )
+		{
+			m_vVelocity.y += WALL_SLIDE * fGravity * fFrameTime;
+		}
+		else
+		{
+			m_vVelocity.y += fGravity * fFrameTime;
+		}
+		//xFriction = AIR_FRICTION;
+	}
+	else
+	{
+		xFriction = GROUND_FRICTION;
+	}
+
+	if ( m_vVelocity.x > 0 )
+	{
+		m_vVelocity.x -= xFriction;
+		m_vVelocity.x = Math::Max( m_vVelocity.x, 0.0f );
+	}
+	else
+	{
+		m_vVelocity.x += xFriction;
+		m_vVelocity.x = Math::Min( m_vVelocity.x, 0.0f );
+	}
+
+	if ( pChar->GetCharacterState()->IsOnWall() )
+	{
+	    if ( nDownDir * m_vVelocity.y > MAX_WALL_SLIDE )
+	    {
+		    m_vVelocity.y = nDownDir * MAX_WALL_SLIDE;
+	    }
+	}
+
+	pChar->SetTargetPosition( vPos );
+}
+
+void CCharacterPhysics::Term()
+{
+}
+
+void CCharacterPhysics::Jump( FLOAT fVelY )
+{
+	m_vVelocity.y = fVelY;
+}
+
+void CCharacterPhysics::StopJump( FLOAT fScaleY )
+{
+	m_vVelocity.y *= fScaleY;
+}
+
+void CCharacterPhysics::Stop()
+{
+	m_vVelocity.y = 0.0f;
+	//m_vVelocity.Set( 0.0f, 0.0f );
+}
+
+void CCharacterPhysics::StopX()
+{
+	m_vVelocity.x = 0.0f;
+}
+
+void CCharacterPhysics::AddForce( VECTOR vForce )
+{
+	m_vVelocity += vForce;
+}
+
+void CCharacterPhysics::SetForce( VECTOR vForce )
+{
+	m_vVelocity = vForce;
+}
+
+void CCharacterPhysics::AddForceX( FLOAT fForceX, FLOAT fLimit )
+{
+	if ( fForceX < 0 )
+	{
+		if ( m_vVelocity.x > -fLimit )
+		{
+			m_vVelocity.x += fForceX - GROUND_FRICTION;
+			m_vVelocity.x = Math::Max( m_vVelocity.x, -fLimit );
+		}
+	}
+	else
+	{
+		if ( m_vVelocity.x < fLimit )
+		{
+			m_vVelocity.x += fForceX + GROUND_FRICTION;
+			m_vVelocity.x = Math::Min( m_vVelocity.x, fLimit );
+		}
+	}
+	//m_vVelocity.x = fForceX;
+	//m_vVelocity.x = Math::Clamp( m_vVelocity.x, -MAX_SPEED, MAX_SPEED );
+}
+
+void CCharacterPhysics::SetVelocityX( FLOAT fVelX )
+{
+	m_vVelocity.x = fVelX;
+}

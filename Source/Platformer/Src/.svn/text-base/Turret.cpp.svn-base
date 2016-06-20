@@ -1,0 +1,150 @@
+#include "StdAfx.h"
+#include "Turret.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "ProjectileManager.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "Character.h"
+
+static const FLOAT	SPAWN_BUFFER_LEFT = 150.0f;
+static const FLOAT	SPAWN_BUFFER_RIGHT = 150.0f;
+static const FLOAT	SPAWN_BUFFER_DOWN = 100.0f;
+//#define	DRAW_BOUNDING_BOX (1)
+
+CReflectInfo CTurretDescription::m_ref_info; 
+
+CActor*	CTurret::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CTurret>();
+}
+
+void CTurret::InitActor( const ActorDescription* pDesc )
+{
+	m_fCurrentTime = pDesc->fStartTime;
+	m_fCurrentRotation = pDesc->fAngle;
+
+	m_bEnabled = pDesc->bStartEnabled;
+	m_bWasEnabled = FALSE;
+
+	m_vBoundingMin.Set( 0.0f, 0.0f );
+	m_vBoundingMax.Set( 0.0f, 0.0f );
+
+	FLOAT fNextAngle = m_fCurrentRotation;
+	if ( pDesc->nNumBullets > 1 )
+	{
+		fNextAngle -= pDesc->fSpread * 0.5f;
+	}
+	for( UINT i = 0; i < pDesc->nNumBullets; i++ )
+	{
+		VECTOR vDir = Math::GetDirectionD( fNextAngle );
+		VECTOR vEnd = vDir * pDesc->fBulletLifetime * pDesc->fBulletSpeed;
+
+		m_vBoundingMin.x = Math::Min( m_vBoundingMin.x, vEnd.x );
+		m_vBoundingMin.y = Math::Min( m_vBoundingMin.y, vEnd.y );
+		m_vBoundingMax.x = Math::Max( m_vBoundingMax.x, vEnd.x );
+		m_vBoundingMax.y = Math::Max( m_vBoundingMax.y, vEnd.y );
+
+		fNextAngle += pDesc->fSpread / (FLOAT)( pDesc->nNumBullets - 1 );
+	}
+}
+
+void CTurret::Reset()
+{
+	m_fCurrentTime = GetDescription()->fStartTime;
+	m_fCurrentRotation = GetDescription()->fAngle;
+	m_bEnabled = GetDescription()->bStartEnabled;
+	m_bWasEnabled = FALSE;
+}
+
+void CTurret::UpdateActor( const FLOAT fFrameTime )
+{
+	if ( m_bEnabled )
+	{
+		BOOL bInRange = IsInRange();
+
+		m_fCurrentTime += fFrameTime;
+		if ( m_fCurrentTime >= GetDescription()->fMaxTime )
+		{
+			if ( bInRange )
+			{
+				CProjectileManager* pProjMgr = GetGameMain()->GetProjectileManager();
+
+				if ( GetDescription()->nNumBullets == 1 )
+				{
+					pProjMgr->CreateProjectile( GetPosition(), Math::GetDirectionD( m_fCurrentRotation ) * GetDescription()->fBulletSpeed, GetDescription()->fBulletLifetime, (EPolarity)GetDescription()->ePolarity );
+				}
+				else
+				{
+					FLOAT fNextAngle = m_fCurrentRotation - GetDescription()->fSpread * 0.5f;
+					for( UINT i = 0; i < GetDescription()->nNumBullets; i++ )
+					{
+						VECTOR vDir = Math::GetDirectionD( fNextAngle );
+						pProjMgr->CreateProjectile( GetPosition(), vDir * GetDescription()->fBulletSpeed, GetDescription()->fBulletLifetime, (EPolarity)GetDescription()->ePolarity );
+						fNextAngle += GetDescription()->fSpread / (FLOAT)( GetDescription()->nNumBullets - 1 );
+					}
+				}
+			}
+
+			m_fCurrentTime -= GetDescription()->fMaxTime;
+		}
+	}
+}
+
+void CTurret::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.5f,0.5f,0.5f) );
+
+#ifdef DRAW_BOUNDING_BOX
+	{
+		VECTOR vPos = ( m_vBoundingMin + m_vBoundingMax ) * 0.5f;
+		VECTOR vExtents = ( m_vBoundingMax - m_vBoundingMin ) * 0.5f;
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB(1.0f,1.0f,0.0f) );
+	}
+#endif
+
+}
+
+void CTurret::CreateComponents() 
+{
+}
+
+void CTurret::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CTurretDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+BOOL CTurret::IsInRange()
+{
+	VECTOR vWindowMin, vWindowMax;
+	GetGameEngine()->GetView()->GetViewableBoundingBox( vWindowMin, vWindowMax );
+	vWindowMin.x -= SPAWN_BUFFER_LEFT;
+	vWindowMax.x += SPAWN_BUFFER_RIGHT;
+	vWindowMax.y += SPAWN_BUFFER_DOWN;
+
+	VECTOR vBoundingMin = m_vBoundingMin + GetPosition();
+	VECTOR vBoundingMax = m_vBoundingMax + GetPosition();
+
+	if ( vBoundingMax.x >= vWindowMin.x && vBoundingMin.x <= vWindowMax.x &&
+		 vBoundingMax.y >= vWindowMin.y && vBoundingMin.y <= vWindowMax.y )
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void CTurret::UpdateEditorSelection()
+{
+	SetRotation( GetDescription()->fAngle );
+}

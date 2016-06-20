@@ -1,0 +1,57 @@
+#ifndef _CHECKPOINT_H_
+#define _CHECKPOINT_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+
+class CCheckpointDescription : public CActorDescription
+{
+public:
+	CCheckpointDescription() : CActorDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 20.0f, 3.0f );
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+	}
+
+};
+
+inline void CCheckpointDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+}
+
+class CCheckpoint : public CLevelObject
+{
+public:
+	typedef CCheckpointDescription ActorDescription;
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Checkpoint; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	BOOL	m_bCompleted;
+
+private:
+	CCheckpointDescription* GetDescription() { return (CCheckpointDescription*)m_pDescription; }
+};
+
+#endif

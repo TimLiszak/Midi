@@ -1,0 +1,125 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU
+BEGIN
+    POPUP "MIDI"
+    BEGIN
+        MENUITEM "Clear All",                   ID_MIDI_CLEAR_ALL
+    END
+    POPUP "Add Object"
+    BEGIN
+        MENUITEM "Guitar",                      ID_ADDOBJECT_GUITAR
+    END
+    POPUP "View"
+    BEGIN
+        POPUP "Aspect Ratio"
+        BEGIN
+            MENUITEM "Standard",                    ID_ASPECTRATIO_STANDARD
+            MENUITEM "Widescreen",                  ID_ASPECTRATIO_WIDESCREEN
+        END
+        MENUITEM "Toggle Grid",                 ID_VIEW_TOGGLEGRID
+        MENUITEM "Toggle Collision",            ID_VIEW_TOGGLECOLLISION
+        MENUITEM "Toggle Bounding Boxes",       ID_VIEW_TOGGLEBOUNDINGBOXES
+    END
+    POPUP "Camera"
+    BEGIN
+        MENUITEM "Player",                      ID_CAMERA_PLAYER
+        MENUITEM "Debug",                       ID_CAMERA_DEBUG
+    END
+    POPUP "Debug"
+    BEGIN
+        MENUITEM "Next Checkpoint",             ID_DEBUG_NEXTCHECKPOINT
+        POPUP "Goto Checkpoint"
+        BEGIN
+            MENUITEM "1",                           ID_GOTOCHECKPOINT_1
+            MENUITEM "2",                           ID_GOTOCHECKPOINT_2
+            MENUITEM "3",                           ID_GOTOCHECKPOINT_3
+            MENUITEM "4",                           ID_GOTOCHECKPOINT_4
+            MENUITEM "5",                           ID_GOTOCHECKPOINT_5
+            MENUITEM "6",                           ID_GOTOCHECKPOINT_6
+            MENUITEM "7",                           ID_GOTOCHECKPOINT_7
+            MENUITEM "8",                           ID_GOTOCHECKPOINT_8
+            MENUITEM "9",                           ID_GOTOCHECKPOINT_9
+            MENUITEM "10",                          ID_GOTOCHECKPOINT_10
+        END
+        MENUITEM "Open All Doors",              ID_DEBUG_OPENALLDOORS
+        MENUITEM "Debug Pause",                 ID_DEBUG_PAUSE
+    END
+    POPUP "Controller"
+    BEGIN
+        MENUITEM "Xbox",                        ID_CONTROLLER_XBOX
+        MENUITEM "PS3",                         ID_CONTROLLER_PS3
+        MENUITEM "PS3 (Other)",                 ID_CONTROLLER_PS4
+    END
+    POPUP "Level"
+    BEGIN
+        MENUITEM "Delete All Level Objects",    ID_LEVEL_DELETEALLLEVELOBJECTS
+        MENUITEM "Clear to Selected Tile",      ID_LEVEL_CLEARTOSELECTEDTILE
+    END
+END
+
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

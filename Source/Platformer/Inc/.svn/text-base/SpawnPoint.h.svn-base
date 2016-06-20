@@ -1,0 +1,59 @@
+#ifndef _SPAWN_POINT_H_
+#define _SPAWN_POINT_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+
+class CSpawnPointDescription : public CActorDescription
+{
+public:
+	CSpawnPointDescription() : CActorDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+	}
+
+};
+
+inline void CSpawnPointDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+}
+
+class CSpawnPoint : public CLevelObject
+{
+public:
+	typedef CSpawnPointDescription ActorDescription;
+
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_SpawnPoint; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	BOOL	m_bCompleted;
+
+private:
+	CSpawnPointDescription* GetDescription() { return (CSpawnPointDescription*)m_pDescription; }
+};
+
+#endif

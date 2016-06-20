@@ -1,0 +1,22 @@
+#include "StdAfx.h"
+#include "LinearMovement.h"
+#include "DynamicActor.h"
+
+void CLinearMovement::Init()
+{
+}
+
+void CLinearMovement::Update( const FLOAT fFrameTime )
+{
+	ASSERT( m_pActor->IsDynamic() );
+
+	CDynamicActor* pActor = (CDynamicActor*)m_pActor;
+	VECTOR vPos = pActor->GetTargetPosition();
+	vPos += m_vVelocity * fFrameTime;
+
+	pActor->SetTargetPosition( vPos );
+}
+
+void CLinearMovement::Term()
+{
+}

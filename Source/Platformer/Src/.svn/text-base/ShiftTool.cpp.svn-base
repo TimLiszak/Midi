@@ -1,0 +1,79 @@
+#include "StdAfx.h"
+#include "ShiftTool.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "Input.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Render2d.h"
+#include "TileMap.h"
+#include "Level.h"
+#include "DebugPrint.h"
+
+void CShiftTool::Init()
+{
+	m_nTileX = -1;
+	m_nTileY = -1;
+}
+
+void CShiftTool::Term()
+{
+}
+
+void CShiftTool::Update( CEditor::SMouseState* pMouseState )
+{
+	CLevel* pLevel = GetGameEngine()->GetWorld()->GetLevel();
+	CTileMap* pTileMap = pLevel->GetTileMap();
+	CTileSet* pTileSet = pTileMap->GetTileSet();
+	FLOAT tw = pTileSet->GetTileWidth();
+	FLOAT th = pTileSet->GetTileHeight();
+
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+
+	m_nTileX = (INT)vMousePos.x / (INT)tw;
+	m_nTileY = (INT)vMousePos.y / (INT)th;
+
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_NUMPAD2 ) )
+	{
+		pTileMap->ShiftDown( m_nTileX, m_nTileY );
+		pLevel->ShiftDown( m_nTileX * tw, m_nTileY * th, th );
+	}
+	if ( pKey->IsKeyTriggered( EKbKey_NUMPAD6 ) )
+	{
+		pTileMap->ShiftRight( m_nTileX, m_nTileY );
+		pLevel->ShiftRight( m_nTileX * tw, m_nTileY * th, tw );
+	}
+	if ( pKey->IsKeyTriggered( EKbKey_NUMPAD8 ) )
+	{
+		pTileMap->ShiftUp( m_nTileX, m_nTileY );
+		pLevel->ShiftUp( m_nTileX * tw, m_nTileY * th, th );
+	}
+	if ( pKey->IsKeyTriggered( EKbKey_NUMPAD4 ) )
+	{
+		pTileMap->ShiftLeft( m_nTileX, m_nTileY );
+		pLevel->ShiftLeft( m_nTileX * tw, m_nTileY * th, tw );
+	}
+
+	GetGameEngine()->GetDebugPrint()->Printf( "tile %d %d\n", m_nTileX, m_nTileY );
+}
+
+void CShiftTool::Render( CEditor::SMouseState* pMouseState )
+{
+	GetGameEngine()->GetView()->PushCameraMatrix();
+
+	VECTOR vScroll = GetGameEngine()->GetCameraManager()->GetCurrentScroll();
+	CTileSet* pTileSet = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTileSet();
+	FLOAT tw = pTileSet->GetTileWidth();
+	FLOAT th = pTileSet->GetTileHeight();
+
+	if ( m_nTileX >= 0 && m_nTileY >= 0 )
+	{
+		VECTOR vPos( m_nTileX * tw, m_nTileY * th );
+		VECTOR vExtents( tw * 0.5f, th * 0.5f );
+		vPos += vExtents;
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 1.0f, 1.0f, 0.0f ) );
+	}
+
+	GetGameEngine()->GetView()->PopCameraMatrix();
+}

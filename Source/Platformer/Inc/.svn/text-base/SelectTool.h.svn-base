@@ -1,0 +1,25 @@
+#ifndef _SELECT_TOOL_H_
+#define _SELECT_TOOL_H_
+
+#include "Editor.h"
+
+class CSelectTool : public CEditorTool
+{
+public:
+	void	Init();
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+
+protected:
+	void	UpdateObjectProperties();
+	class CLevelObject*	m_pSelectedActor;
+
+	INT		m_nSelectedMember;
+	VECTOR	m_vDragOffset;
+	FLOAT	m_fButtonHoldTime;
+	BOOL	m_bSelectingOtherObjects;
+};
+
+#endif

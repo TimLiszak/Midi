@@ -1,0 +1,112 @@
+#ifndef _CAMERA_OBJECT_H_
+#define _CAMERA_OBJECT_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+
+enum ECameraType
+{
+	ECameraType_Player = 0,
+	ECameraType_MoveToPosition,
+
+	ECameraType_Max
+};
+
+class CCameraObjectDescription : public CActorDescription
+{
+public:
+	CCameraObjectDescription() : CActorDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		vMax.Set( 99999.0f, 99999.0f );
+		vMin.Set( -99999.0f, -99999.0f );
+		vOffset.Set( 0.0f, 0.0f );
+		nCameraType = ECameraType_Player;
+		fTime = 0.0f;
+		fTransitionTime = 0.5f;
+	}
+	REFLECTION_INFO;
+
+	VECTOR	vMin;
+	VECTOR	vMax;
+	VECTOR	vOffset;
+	INT		nCameraType;
+	FLOAT	fTime;
+	FLOAT	fTransitionTime;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( vMin );
+		Serializer->Serialize( vMax );
+		Serializer->Serialize( vOffset );
+		Serializer->Serialize( nCameraType );
+		Serializer->Serialize( fTime );
+		Serializer->Serialize( fTransitionTime );
+
+        if ( Serializer->GetVersion() < EFileVersion_CameraScroll )
+        {
+            VECTOR vOffset( 854, 480 );
+            vOffset *= 0.5f;
+            vMin -= vOffset;
+            vMax -= vOffset;
+        }
+	}
+
+};
+
+inline void CCameraObjectDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vMin, 3.0f );
+	REGISTER_INC( REF_VECTOR, vMax, 3.0f );
+	REGISTER_INC( REF_VECTOR, vOffset, 3.0f );
+	REGISTER_LIMIT( REF_INT, nCameraType, 0, ECameraType_Max );
+	REGISTER_ALL( REF_FLOAT, fTime, 0.0f, 99.0f, 0.005f );
+	REGISTER_ALL( REF_FLOAT, fTransitionTime, 0.0f, 99.0f, 0.005f );
+}
+
+class CCameraObject : public CLevelObject
+{
+public:
+	typedef CCameraObjectDescription ActorDescription;
+
+	virtual void	Reset();
+
+	virtual inline BOOL	IsMovable() { return TRUE; }
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_CameraObject; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+	std::string		GetCameraName();
+
+	virtual void	SetPosition( VECTOR vPos, BOOL bFromEditor = FALSE );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	void	CreateCamera();
+
+	CCamera* m_pCamera;
+
+private:
+	CCameraObjectDescription* GetDescription() { return (CCameraObjectDescription*)m_pDescription; }
+};
+
+#endif

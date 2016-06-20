@@ -1,0 +1,29 @@
+
+#ifndef _CHARACTER_INPUT_H_
+#define _CHARACTER_INPUT_H_
+
+#include "Actor.h"
+
+class CCharacterInput
+{
+	friend class CInputParser;
+
+public:
+	CCharacterInput();
+
+	BOOL	IsRunning();
+	FLOAT	GetRunDirection();
+	BOOL	SwitchPolarity();
+	BOOL	JumpTriggered();
+	BOOL	JumpReleased();
+
+protected:
+	FLOAT	m_fRunDirection;
+	BOOL	m_bSwitchPolarity;
+	BOOL	m_bJumpTriggered;
+	BOOL	m_bJumpReleased;
+
+};
+
+#endif
+

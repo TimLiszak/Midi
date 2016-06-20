@@ -1,0 +1,84 @@
+#ifndef _EDITOR_H_
+#define _EDITOR_H_
+
+#include "Mouse.h"
+
+class CEditorCallback : public CMenuCallback, public CDragDropCallback
+{
+public:
+	void Init( class CEditor* pEditor );
+	virtual void	MenuSelected( INT nMenuId );
+	virtual void	DragDropFiles( const std::vector< std::string >& Files );
+
+private:
+	CEditor* m_pEditor;
+
+};
+
+class CEditor 
+{
+	friend class CEditorCallback;
+	friend class CEditorTool;
+
+public:
+	void	Init();
+	void	Term();
+	void	Update();
+	void	Render();
+
+	struct SMouseState 
+	{
+		BOOL		bDown[EMouseButton_Max];
+		VECTOR		vStart[EMouseButton_Max];
+		VECTOR		vEnd[EMouseButton_Max];
+		VECTOR		vOffset[EMouseButton_Max];
+	};
+
+	enum EEditorTool
+	{
+		EEditorTool_None			= 0,
+		EEditorTool_TileTool		= 1,
+		EEditorTool_SelectTool		= 2,
+		EEditorTool_AddTool			= 3,
+		EEditorTool_ShiftTool		= 4,
+		EEditorTool_LevelProperties	= 5,
+		EEditorTool_TilePropertiesTool = 6,
+		EEditorTool_SpriteTool		= 7,
+
+		EEditorTool_Max
+	};
+
+	void	ChangeTool( EEditorTool eTool );
+
+private:
+	void	UpdateMouse();
+
+	CEditorCallback	m_EditorCallback;
+
+	SMouseState m_MouseState;
+	
+	class CTileSetBitmap*		m_pCollisionTileSet;
+	
+	class CEditorTool*			m_pCurrentTool;
+	class CTileTool*			m_pTileTool;
+	class CTileCollisionTool*	m_pCollisionTool;
+	class CAddTool*				m_pAddTool;
+	class CSelectTool*			m_pSelectTool;
+	class CShiftTool*			m_pShiftTool;
+	class CTilePropertiesTool*	m_pTilePropertiesTool;
+	class CSpriteTool*			m_pSpriteTool;
+
+	UINT	m_uNextCheckpoint;
+	INT		m_nSelectedTile;
+
+};
+
+class CEditorTool
+{
+public:
+	virtual void	Update( CEditor::SMouseState* pMouseState ) = 0;
+	virtual void	Render( CEditor::SMouseState* pMouseState ) = 0;
+	virtual void	DragDropFiles( const std::vector< std::string >& Files ) {}
+};
+
+#endif

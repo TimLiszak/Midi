@@ -1,0 +1,67 @@
+#include "StdAfx.h"
+#include "ProximityTrigger.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "CameraManager.h"
+
+CReflectInfo CPlayerTriggerDescription::m_ref_info; 
+CReflectInfo CObjectTriggerDescription::m_ref_info; 
+
+CActor*	CPlayerProximityTrigger::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CPlayerProximityTrigger>();
+}
+
+BOOL CPlayerProximityTrigger::CheckTrigger( std::list<INT>& listTriggerIds )
+{
+	BOOL bReturn = FALSE;
+	std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+	std::list<CCharacter*>::iterator it;
+	for ( it = pPlayers->begin() ; it != pPlayers->end(); it++ )
+	{
+		if( !(*it)->IsDead() )
+		{
+			VECTOR vPos = GetDescription()->vTriggerOffset + GetPosition();
+			VECTOR vPlayerPos = (*it)->GetPosition();
+			VECTOR vDiff = vPlayerPos - vPos;
+
+			if ( GetDescription()->ePolarity == EPolarity_Neutral || (EPolarity)GetDescription()->ePolarity == (*it)->GetPolarity() )
+			{
+				if ( vDiff.GetLengthSquared() < GetDescription()->fTriggerRadius * GetDescription()->fTriggerRadius )
+				{
+					listTriggerIds.push_back( (*it)->GetCharacterId() );
+					bReturn = TRUE;
+				}
+			}
+		}
+	}
+	return bReturn;
+}
+
+CActor*	CObjectProximityTrigger::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CObjectProximityTrigger>();
+}
+
+BOOL CObjectProximityTrigger::CheckTrigger( std::list<INT>& listTriggerIds )
+{
+	VECTOR vPos = GetDescription()->vTriggerOffset + GetPosition();
+
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+	
+		VECTOR vObjectPos = sInfo.pActor->GetPosition();
+		VECTOR vDiff = vObjectPos - vPos;
+		if ( vDiff.GetLengthSquared() < GetDescription()->fTriggerRadius * GetDescription()->fTriggerRadius )
+		{
+			listTriggerIds.push_back( 0 );
+			return TRUE;
+		}
+	}
+	return FALSE;
+}

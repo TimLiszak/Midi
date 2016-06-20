@@ -1,0 +1,90 @@
+#ifndef _OSCILLATOR_H_
+#define _OSCILLATOR_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class COscillatorDescription : public COutputterDescription
+{
+public:
+	COscillatorDescription() : COutputterDescription(), 
+		fOffTime( 1.0f ),
+		fOnTime( 1.0f ),
+		fDelay( 0.0f )
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		vSelectionPosition.Set( 0.0f, 0.0f );
+		vSelectionExtents.Set( 50.0f, 50.0f );
+	}
+	REFLECTION_INFO;
+
+	FLOAT	fDelay;
+	FLOAT	fOnTime;
+	FLOAT	fOffTime;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fDelay );
+		Serializer->Serialize( fOnTime );
+		Serializer->Serialize( fOffTime );
+	}
+};
+
+inline void COscillatorDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+
+	REGISTER_ALL( REF_FLOAT, fDelay, 0.0f, 9999.0f, 0.05f );
+	REGISTER_ALL( REF_FLOAT, fOnTime, 0.0f, 9999.0f, 0.05f );
+	REGISTER_ALL( REF_FLOAT, fOffTime, 0.0f, 9999.0f, 0.05f );
+}
+
+class COscillator : public COutputter
+{
+public:
+	typedef COscillatorDescription ActorDescription;
+
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Oscillator; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	FLOAT	m_fCurrentTime;
+	BOOL	m_bIsOn;
+
+private:
+	COscillatorDescription* GetDescription() { return (COscillatorDescription*)m_pDescription; }
+};
+
+inline BOOL COscillator::CanSelectActor( CActor* pActor )
+{
+	return TRUE;
+}
+
+#endif

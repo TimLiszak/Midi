@@ -1,0 +1,336 @@
+#include "StdAfx.h"
+#include "AddTool.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "Input.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Render2d.h"
+#include "SpriteInfo.h"
+
+#include "Turret.h"
+#include "CameraObject.h"
+#include "ProximityTrigger.h"
+#include "Checkpoint.h"
+#include "Laser.h"
+#include "Mover.h"
+#include "Rotator.h"
+#include "DoorKey.h"
+#include "Platform.h"
+#include "ObjectGroup.h"
+#include "ConveyorBelt.h"
+#include "SpawnPoint.h"
+#include "LevelExit.h"
+#include "Magnet.h"
+#include "LookAtRotator.h"
+#include "Oscillator.h"
+#include "SpringBox.h"
+#include "Decoration.h"
+#include "GravityModifier.h"
+
+static const VECTOR OFFSET( 20.0f, 50.0f );
+static const FLOAT	WIDTH = 110.0f;
+static const FLOAT	NUM_ROWS = ELevelObjectType_Max;
+
+void CAddTool::Init()
+{
+	m_nAddObject = -1;
+
+	VECTOR vWindowSize = GetGameEngine()->GetView()->GetViewSize();
+	VECTOR vSize = GetGameEngine()->GetDebugPrint()->GetGridSize();
+	vSize.x *= vWindowSize.x * 0.5f;
+	vSize.y *= vWindowSize.y * 0.5f;
+	m_fRowHeight = vSize.y;
+}
+
+void CAddTool::Term()
+{
+}
+
+void CAddTool::Update( CEditor::SMouseState* pMouseState )
+{
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	VECTOR vScreenPos = GetGameEngine()->GetView()->GetMouseScreenPosition();
+
+	if ( vScreenPos.x >= OFFSET.x && vScreenPos.x <= OFFSET.x + WIDTH &&
+		 vScreenPos.y >= OFFSET.y && vScreenPos.y <= OFFSET.y + m_fRowHeight * NUM_ROWS )
+	{
+		if ( pMouse->IsMouseTriggered( EMouseButton_Left ) )
+		{
+			INT row = (INT)((vScreenPos.y - OFFSET.y) / m_fRowHeight);
+			m_nAddObject = row;
+		}
+	}
+	else
+	{
+		if ( m_nAddObject >= 0 )
+		{
+			if ( pMouse->IsMouseTriggered( EMouseButton_Left ) )
+			{
+				switch( m_nAddObject )
+				{
+					case ELevelObjectType_Turret:
+					{
+						CTurretDescription* pDesc = new CTurretDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vExtents.Set( 20.0f, 15.0f );
+						CTurret* pActor = GetGameEngine()->GetWorld()->SpawnActor<CTurret>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_CameraObject:
+					{
+						CCameraObjectDescription* pDesc = new CCameraObjectDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+                        pDesc->vMin = vMousePos - GetGameEngine()->GetView()->GetViewSize() * 0.5f;
+						pDesc->vMax = vMousePos - GetGameEngine()->GetView()->GetViewSize() * 0.5f;
+						CCameraObject* pActor = GetGameEngine()->GetWorld()->SpawnActor<CCameraObject>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_PlayerProximityTrigger:
+					{
+						CTriggerDescription* pDesc = new CTriggerDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CPlayerProximityTrigger* pActor = GetGameEngine()->GetWorld()->SpawnActor<CPlayerProximityTrigger>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_ObjectProximityTrigger:
+					{
+						CTriggerDescription* pDesc = new CTriggerDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CObjectProximityTrigger* pActor = GetGameEngine()->GetWorld()->SpawnActor<CObjectProximityTrigger>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Checkpoint:
+					{
+						CCheckpointDescription* pDesc = new CCheckpointDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CCheckpoint* pActor = GetGameEngine()->GetWorld()->SpawnActor<CCheckpoint>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Laser:
+					{
+						CLaserDescription* pDesc = new CLaserDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vExtents.Set( 20.0f, 15.0f );
+						CLaser* pActor = GetGameEngine()->GetWorld()->SpawnActor<CLaser>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Mover:
+					{
+						CMoverDescription* pDesc = new CMoverDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CMover* pActor = GetGameEngine()->GetWorld()->SpawnActor<CMover>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Rotator:
+					{
+						CRotatorDescription* pDesc = new CRotatorDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CRotator* pActor = GetGameEngine()->GetWorld()->SpawnActor<CRotator>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_DoorKey:
+					{
+						CDoorKeyDescription* pDesc = new CDoorKeyDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CDoorKey* pActor = GetGameEngine()->GetWorld()->SpawnActor<CDoorKey>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Platform:
+					{
+						CPlatformDescription* pDesc = new CPlatformDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CPlatform* pActor = GetGameEngine()->GetWorld()->SpawnActor<CPlatform>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_ObjectGroup:
+					{
+						CObjectGroupDescription* pDesc = new CObjectGroupDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CObjectGroup* pActor = GetGameEngine()->GetWorld()->SpawnActor<CObjectGroup>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_ConveyorBelt:
+					{
+						CConveyorBeltDescription* pDesc = new CConveyorBeltDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CConveyorBelt* pActor = GetGameEngine()->GetWorld()->SpawnActor<CConveyorBelt>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_SpawnPoint:
+					{
+						CSpawnPointDescription* pDesc = new CSpawnPointDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CSpawnPoint* pActor = GetGameEngine()->GetWorld()->SpawnActor<CSpawnPoint>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_LevelExit:
+					{
+						CLevelExitDescription* pDesc = new CLevelExitDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CLevelExit* pActor = GetGameEngine()->GetWorld()->SpawnActor<CLevelExit>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+					
+					case ELevelObjectType_Magnet:
+					{
+						CMagnetDescription* pDesc = new CMagnetDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CMagnet* pActor = GetGameEngine()->GetWorld()->SpawnActor<CMagnet>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+					
+					case ELevelObjectType_LookAtRotator:
+					{
+						CLookAtRotatorDescription* pDesc = new CLookAtRotatorDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						CLookAtRotator* pActor = GetGameEngine()->GetWorld()->SpawnActor<CLookAtRotator>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_Oscillator:
+					{
+						COscillatorDescription* pDesc = new COscillatorDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->vSelectionPosition = vMousePos;
+						COscillator* pActor = GetGameEngine()->GetWorld()->SpawnActor<COscillator>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_SpringBox:
+					{
+						CSpringBoxDescription* pDesc = new CSpringBoxDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						pDesc->SpriteInfo.strFilename = "Sprites\\SpringRed.spr";
+						CSpringBox* pActor = GetGameEngine()->GetWorld()->SpawnActor<CSpringBox>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+                    
+					case ELevelObjectType_Decoration:
+					{
+						CDecorationDescription* pDesc = new CDecorationDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CDecoration* pActor = GetGameEngine()->GetWorld()->SpawnActor<CDecoration>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+
+					case ELevelObjectType_GravityModifier:
+					{
+						CGravityModifierDescription* pDesc = new CGravityModifierDescription();
+						pDesc->nUniqueActorId = GetGameEngine()->GetWorld()->GetLevel()->GetNextUniqueActorId();
+						pDesc->vPosition = vMousePos;
+						CGravityModifier* pActor = GetGameEngine()->GetWorld()->SpawnActor<CGravityModifier>( pDesc );
+						GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pActor );
+					}
+					break;
+				}
+				//m_nAddObject = -1;
+			}
+		}
+	}
+}
+
+void CAddTool::Render( CEditor::SMouseState* pMouseState )
+{
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	if ( m_nAddObject >= 0 )
+	{
+		GetGameEngine()->GetView()->PushCameraMatrix();
+
+		CRender2d::DrawCircleFill( vMousePos, 5.0f, COLOUR_RGB( 1.0f, 1.0f, 0.0f ) );
+
+		GetGameEngine()->GetView()->PopCameraMatrix();
+	}
+
+	CLevel* pLevel = GetGameEngine()->GetWorld()->GetLevel();
+	std::map< UINT, CLevelObject* >* pTypes = pLevel->GetObjectTypes();
+
+	static const INT START_ROW = 2;
+	static const INT START_COL = 1;
+
+	VECTOR vExtents( WIDTH * 0.5f, m_fRowHeight * 0.5f );
+	VECTOR vPos = OFFSET + vExtents;
+
+
+	GetGameEngine()->GetDebugPrint()->ChangeColour( COLOUR_RGB( 1.0f, 1.0f, 1.0f ) );
+	GetGameEngine()->GetDebugPrint()->SetPosition( VECTOR( START_COL, START_ROW ) );
+
+	for( UINT i = 0; i < (UINT)ELevelObjectType_Max; i++ )
+	{
+		if ( m_nAddObject == (INT)i )
+		{
+			CRender2d::DrawRectOutline( vPos, vExtents, 0.0f, COLOUR_RGB( 0.5f, 0.5f, 0.0f ), COLOUR_RGB( 0.2f, 0.2f, 0.2f ) );
+		}
+		else
+		{
+			CRender2d::DrawRectOutline( vPos, vExtents, 0.0f, COLOUR_RGB( 0.5f, 0.5f, 0.5f ), COLOUR_RGB( 0.2f, 0.2f, 0.2f ) );
+		}
+		vPos.y += m_fRowHeight;
+
+		CLevelObject* pObj = (*pTypes)[i];
+		CActorDescription* pDesc = pObj->GetActorDescription();
+		std::string str = pDesc->GetReflectInfo()->m_ClassName.c_str();
+		INT nPos = str.find( "Description" );
+		str = str.substr( 0, nPos );
+		GetGameEngine()->GetDebugPrint()->Printf( "%s", str.c_str() );
+	}
+
+}

@@ -1,0 +1,68 @@
+#ifndef _LEVEL_EXIT_H_
+#define _LEVEL_EXIT_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+
+class CLevelExitDescription : public CActorDescription
+{
+public:
+	CLevelExitDescription() : CActorDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 30.0f, 30.0f );
+		nLevel = 1;
+	}
+	REFLECTION_INFO;
+
+	INT	nLevel;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( nLevel );
+	}
+
+
+};
+
+inline void CLevelExitDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER( REF_INT, nLevel );
+}
+
+class CLevelExit : public CLevelObject
+{
+public:
+	typedef CLevelExitDescription ActorDescription;
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_LevelExit; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	CLevelExitDescription	m_Description;
+
+	BOOL	m_bCollected;
+
+private:
+	CLevelExitDescription* GetDescription() { return (CLevelExitDescription*)m_pDescription; }
+
+};
+
+#endif

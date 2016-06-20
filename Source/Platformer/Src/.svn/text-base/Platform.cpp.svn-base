@@ -1,0 +1,69 @@
+#include "StdAfx.h"
+#include "Platform.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+
+CReflectInfo CPlatformDescription::m_ref_info; 
+
+CActor*	CPlatform::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CPlatform>();
+}
+
+void CPlatform::InitActor( const ActorDescription* pDesc )
+{
+}
+
+void CPlatform::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CPlatform::Render()
+{
+	if( m_pSprite )
+	{
+		return;
+	}
+
+	COLOUR_RGB Clr = COLOUR_RGB( GetDescription()->fColourR, GetDescription()->fColourG, GetDescription()->fColourB );
+
+	if ( GetDescription()->ePolarity != EPolarity_Neutral )
+	{
+		Clr = GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity );
+	}
+
+	if ( GetDescription()->uShape == EPlatformShape_Box )
+	{
+		CRender2d::DrawRectFill( GetPosition(), GetExtents(), 0.0f, Clr );
+	}
+	else if ( GetDescription()->uShape == EPlatformShape_Circle )
+	{
+		CRender2d::DrawCircleFill( GetPosition(), GetExtents().x, Clr );
+	}
+	else
+	{
+		ASSERT( FALSE );
+	}
+}
+
+void CPlatform::CreateComponents() 
+{
+}
+
+void CPlatform::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CPlatformDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}

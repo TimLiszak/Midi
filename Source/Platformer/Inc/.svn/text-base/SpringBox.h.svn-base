@@ -1,0 +1,84 @@
+#ifndef _SPRING_BOX_H_
+#define _SPRING_BOX_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CSpringBoxDescription : public CActorDescription
+{
+public:
+	CSpringBoxDescription() : CActorDescription(), 
+		ePolarity( EPolarity_Neutral ),
+		nDirection(-1),
+		bHorizontal(FALSE),
+		fForce(1000.0f)
+	{
+		uGroup = EActorGroup_Obstacle;
+		vExtents.Set( 16.0f, 16.0f );
+	}
+	REFLECTION_INFO;
+
+	UINT	ePolarity;
+	INT		nDirection;
+	BOOL	bHorizontal;
+	FLOAT	fForce;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( nDirection );
+		Serializer->Serialize( bHorizontal );
+		Serializer->Serialize( fForce );
+	}
+
+};
+
+inline void CSpringBoxDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 2 );
+	REGISTER_LIMIT( REF_INT, nDirection, -1, 1 );
+	REGISTER_LIMIT( REF_UINT, bHorizontal, 0, 1 );
+	REGISTER( REF_FLOAT, fForce );
+}
+
+class CSpringBox : public CLevelObject
+{
+public:
+
+	typedef CSpringBoxDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_SpringBox; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual EPolarity	GetPolarity();
+
+	virtual void	CharacterCollision( class CCharacter* pCharacter, INT nCollideX, INT nCollideY );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+
+	FLOAT	m_fTimeUntilRetract;
+
+private:
+	CSpringBoxDescription* GetDescription() { return (CSpringBoxDescription*)m_pDescription; }
+};
+
+inline EPolarity CSpringBox::GetPolarity()
+{
+	return (EPolarity)GetDescription()->ePolarity;
+}
+
+#endif

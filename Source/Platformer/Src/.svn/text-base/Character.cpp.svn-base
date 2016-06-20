@@ -1,0 +1,341 @@
+#include "StdAfx.h"
+#include "Character.h"
+#include "CharacterPhysics.h"
+#include "InputMovement.h"
+#include "JumpMovement.h"
+#include "WalLSlideMovement.h"
+#include "Render2d.h"
+#include "World.h"
+#include "Level.h"
+#include "Projectile.h"
+#include "ActorGroups.h"
+#include "TileMap.h"
+#include "PolarLevelObject.h"
+#include "LevelObjectTypes.h"
+#include "ConveyorBelt.h"
+#include "PushingComponent.h"
+#include "CharacterState.h"
+#include "GravityModifier.h"
+
+CActor*	CCharacter::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CCharacter>();
+}
+
+void CCharacter::InitActor( const ActorDescription* pDesc )
+{
+	m_bDBGodMode = FALSE;
+	m_vSpawnOffset.Set( 0.0f, 0.0f );
+	m_fHealth = 1.0f;
+	SetPolarity( EPolarity_Red );
+	m_nCharacterId = pDesc->nCharacterId;
+	m_pAttachToActor = NULL;
+    m_pGravityModifier = NULL;
+
+	m_pTexRed = GetGameEngine()->GetTextureManager()->BuildTexture( "red.bmp" );
+	m_pTexBlue = GetGameEngine()->GetTextureManager()->BuildTexture( "blue.bmp" );
+}
+
+void CCharacter::Render()
+{
+	if ( m_fHealth == 0.0f ) return;
+
+	COLOUR_RGB Clr( 1.0f, 1.0f, 1.0f );
+	switch( m_ePolarity )
+	{
+		case EPolarity_Red:
+		{
+			CRender2d::BindTexture( m_pTexRed );
+		}
+		break;
+
+		case EPolarity_Blue:
+		{
+			CRender2d::BindTexture( m_pTexBlue );
+		}
+		break;
+
+		default:
+			ASSERT( FALSE );
+	}
+    INT nDownDir = GetDownDirection();
+
+	CRender2d::UV sUV( 0.0f, 0.0f, 1.0f, 1.0f );
+
+    if ( nDownDir < 0 ) // gravity up
+    {
+        sUV.v0 = 1.0f;
+        sUV.v1 = 0.0f;
+    }
+	if ( m_pInputMovement->GetDirection() < 0 )
+	{
+        sUV.u0 = 1.0f;
+        sUV.u1 = 0.0f;
+    }
+
+	CRender2d::DrawRectFill( m_vPosition, m_vExtents, 0.0f, Clr, &sUV);
+	CRender2d::EndTexture();
+}
+
+void CCharacter::CreateComponents()
+{
+	m_pCharacterState = new CCharacterState( this );
+	m_pInputMovement = new CInputMovement( this );
+	m_pCharacterPhysics = new CCharacterPhysics( this );
+	m_pJumpMovement = new CJumpMovement( this );
+	m_pWallSlideMovement = new CWallSlideMovement( this );
+	m_pWallSlideMovement->SetEnabled( FALSE );
+
+
+	// Movement
+	m_vecComponents.push_back( m_pCharacterState );
+	m_vecComponents.push_back( m_pInputMovement );
+	m_vecComponents.push_back( m_pJumpMovement );
+	m_vecComponents.push_back( m_pWallSlideMovement );
+	m_vecComponents.push_back( m_pCharacterPhysics );
+
+	if ( m_nCharacterId == 0 )
+	{
+		// Player 1 handles pushing
+		m_vecComponents.push_back( new CPushingComponent(this) );
+	}
+}
+
+void CCharacter::UpdateActor( const FLOAT fFrameTime )
+{
+	CCharacterInput* pInput = GetCharacterInput();
+
+	if ( pInput->SwitchPolarity() )
+	{
+		SwitchPolarity();
+	}
+
+}
+
+void CCharacter::UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget )
+{
+	UINT uGroupsMask = 0xFFFFFFFF;
+	uGroupsMask ^= 1 << EActorGroup_NoCollision;
+
+	CCollision::SweepResult sResult;
+	if ( GetGameEngine()->GetWorld()->GetLevel()->CheckSweepCollision( sResult, GetExtents(), vCurrentPos, vTarget, uGroupsMask ) )
+	{
+		vTarget = sResult.vResult;
+
+		GetCharacterState()->HandleCollision( TRUE, sResult );
+
+		CheckCollisionActor( sResult, vTarget );
+
+		if ( sResult.pTileProperties )
+		{
+			if ( sResult.nCollideY != 0 && sResult.pTileProperties->bInstantDeath )
+			{
+				DecreaseHealth( 1.0f );
+			}
+		}
+	}
+	else
+	{
+		GetCharacterState()->HandleCollision( FALSE, sResult );
+	}
+
+
+    /*
+	uGroupsMask = 1 << EActorGroup_Character;
+	if ( GetGameEngine()->GetWorld()->CheckSweepCollision( sResult, this, GetExtents(), vCurrentPos, vTarget, uGroupsMask ) )
+	{
+		if ( sResult.nCollideY == 1 )
+		{
+			vTarget = sResult.vResult;
+            GetCharacterState()->SetOnGround( sResult.pTileProperties );
+			GetPhysics()->Stop();
+		}
+	}*/
+
+
+	/*
+	// Check going off camera
+	VECTOR vExtents = GetExtents();
+	VECTOR vWindowMin, vWindowMax;
+	GetGameEngine()->GetView()->GetViewableBoundingBox( vWindowMin, vWindowMax );
+
+	vTarget.x = Math::Clamp( vTarget.x, vWindowMin.x + vExtents.x, vWindowMax.x - vExtents.x );
+	vTarget.y = Math::Max( vTarget.y, vWindowMin.y + vExtents.y );
+	*/
+
+	// New position
+	SetPosition( vTarget );
+}
+
+void CCharacter::TakeHit( EPolarity ePolarity )
+{
+	if ( ePolarity != m_ePolarity )
+	{
+		if ( m_bDBGodMode )
+		{
+			SwitchPolarity();
+		}
+		else
+		{
+			DecreaseHealth( 1.0f );
+		}
+	}
+}
+
+void CCharacter::CollideWithProjectile( class CProjectile* pProjectile )
+{
+	TakeHit( pProjectile->GetPolarity() );
+}
+
+void CCharacter::DecreaseHealth( FLOAT fAmount )
+{
+	if ( m_fHealth > 0.0f )
+	{
+		m_fHealth -= fAmount;
+		if ( m_fHealth <= 0.0f )
+		{
+			m_fHealth = 0.0f;
+			//m_bEnableComponents = FALSE;
+			//Death
+		}
+	}
+}
+
+void CCharacter::SwitchPolarity()
+{
+	if ( m_ePolarity == EPolarity_Red )
+	{
+		SetPolarity( EPolarity_Blue );
+	}
+	else if ( m_ePolarity == EPolarity_Blue )
+	{
+		SetPolarity( EPolarity_Red );
+	}
+
+}
+
+void CCharacter::SetPolarity( EPolarity ePolarity )
+{
+	m_ePolarity = ePolarity;
+
+	CTileMap* pTileMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+	if ( pTileMap && GetCharacterId() == 0 )
+	{
+		pTileMap->EnableAlternateTiles( m_ePolarity == EPolarity_Blue );
+	}
+}
+
+
+void CCharacter::CheckCollisionActor( CCollision::SweepResult& sResult, VECTOR& vPos )
+{
+	CActor* pActor = sResult.pActor;
+	if ( !pActor )
+	{
+		return;
+	}
+	CLevelObject* pObject = (CLevelObject*)pActor;
+	pObject->CharacterCollision( this, sResult.nCollideX, sResult.nCollideY );
+
+	if ( pActor->IsDangerous() )
+	{
+		CPolarLevelObject* pPolarObj = (CPolarLevelObject*)pActor;
+		if ( pPolarObj->GetPolarity() != EPolarity_Neutral &&
+			 pPolarObj->GetPolarity() != GetPolarity() )
+		{
+			DecreaseHealth( 1.0f );
+		}
+	}
+
+	if ( pObject->GetObjectId() == ELevelObjectType_ConveyorBelt )
+	{
+		CConveyorBelt* pConveyor = (CConveyorBelt*)pObject;
+		if ( !pConveyor->IsVertical() )
+		{
+			FLOAT fSpeed = pConveyor->GetSpeed( GetPolarity() ) * GetGameEngine()->GetFrameTime();
+			vPos.x += fSpeed;
+		}
+	}
+}
+
+void CCharacter::AddForce( VECTOR vForce )
+{
+	GetPhysics()->AddForce( vForce );
+	GetCharacterState()->SetInAir();
+}
+
+BOOL CCharacter::CheckSweepCollision( CCollision::SweepResult& sResult, VECTOR vExtents, VECTOR vP1, VECTOR vP2 )
+{
+	if ( IsDead() )
+	{
+		return FALSE;
+	}
+	return CDynamicActor::CheckSweepCollision( sResult, vExtents, vP1, vP2 );
+}
+
+BOOL CCharacter::CheckBoxCollision( CCollision::SAABBox& Box )
+{
+	if ( IsDead() )
+	{
+		return FALSE;
+	}
+	return CDynamicActor::CheckBoxCollision( Box );
+}
+
+BOOL CCharacter::CheckLineCollision( VECTOR vStart, VECTOR vEnd, FLOAT& fT )
+{
+	if ( IsDead() )
+	{
+		return FALSE;
+	}
+	return CDynamicActor::CheckLineCollision( vStart, vEnd, fT );
+}
+
+void CCharacter::DisableAirMovement( FLOAT fTime )
+{
+	m_pInputMovement->DisableAirMovement( fTime );
+}
+
+void CCharacter::Reset( VECTOR vPos, EPolarity ePolarity )
+{
+	SetPosition( vPos + m_vSpawnOffset );
+	m_fHealth = 1.0f;
+	m_bEnableComponents = TRUE;
+	SetPolarity( ePolarity );
+
+	for (UINT i = 0; i < m_vecComponents.size(); i++)
+	{
+        m_vecComponents[i]->Term();
+        m_vecComponents[i]->Init();
+        m_vecComponents[i]->SetEnabled( TRUE );
+    }
+	m_pWallSlideMovement->SetEnabled( FALSE );
+}
+
+void CCharacter::AddGravityModifier( class CGravityModifier* pModifier )
+{
+    m_pGravityModifier = pModifier;
+}
+
+CGravityModifier* CCharacter::GetGravityModifier()
+{
+    return m_pGravityModifier;
+}
+
+INT CCharacter::GetDownDirection()
+{
+    INT nDownDir = 1;
+    if ( GetGravityModifier() )
+    {
+        FLOAT fScale = GetGravityModifier()->GetGravityScale( GetPolarity() );
+        nDownDir = fScale < 0 ? -1 : 1;
+    }
+    return nDownDir;
+}
+
+void CCharacter::LevelObjectDeleted( class CLevelObject* pObject )
+{
+    if ( m_pGravityModifier == pObject )
+    {
+        m_pGravityModifier = NULL;
+    }
+}

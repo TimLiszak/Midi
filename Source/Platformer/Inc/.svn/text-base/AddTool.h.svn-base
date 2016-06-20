@@ -1,0 +1,27 @@
+#ifndef _ADD_TOOL_H_
+#define _ADD_TOOL_H_
+
+#include "Editor.h"
+
+class CAddTool : public CEditorTool
+{
+public:
+	void	Init();
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+
+	void	SetObjectType( INT nObject );
+
+protected:
+	INT	 m_nAddObject;
+	FLOAT	m_fRowHeight;
+};
+
+inline void CAddTool::SetObjectType( INT nObject )
+{
+	m_nAddObject = nObject;
+}
+
+#endif

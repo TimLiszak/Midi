@@ -1,0 +1,173 @@
+#include "StdAfx.h"
+#include "Mover.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "CameraManager.h"
+#include "Input.h"
+#include "Character.h"
+#include "World.h"
+
+CReflectInfo CMoverDescription::m_ref_info; 
+
+CActor*	CMover::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CMover>();
+}
+
+void CMover::InitActor( const ActorDescription* pDesc )
+{
+    m_fCurrentDistance = ( pDesc->fStartTime / pDesc->fMoveTime ) * pDesc->fMoveDistance;
+	m_fDirection = 1.0f;
+    m_fCurrentSpeed = 0.0f;
+    m_bDecelerate = FALSE;
+
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+}
+
+void CMover::Reset()
+{
+    m_fCurrentDistance = ( GetDescription()->fStartTime / GetDescription()->fMoveTime ) * GetDescription()->fMoveDistance;
+	m_fDirection = 1.0f;
+    m_fCurrentSpeed = 0.0f;
+    m_bDecelerate = FALSE;
+}
+
+void CMover::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void CMover::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+	
+	if ( m_bEnabled || GetDescription()->bSwitchDirection )
+	{
+        const FLOAT ACCELERATION = 10.0f;
+		FLOAT fDirection = m_fDirection;
+		if ( GetDescription()->bSwitchDirection )
+		{
+			fDirection = m_bEnabled ? m_fDirection : -m_fDirection;
+		}
+
+        if ( m_bDecelerate )
+        {
+            m_fCurrentSpeed -= ACCELERATION;
+            m_fCurrentSpeed = Math::Max( m_fCurrentSpeed, 0.0f );
+		    m_fCurrentDistance += fDirection * m_fCurrentSpeed * fFrameTime;
+
+            if ( m_fCurrentSpeed <= 0.0f )
+            {
+                if ( fDirection > 0.0f )
+                {
+			        if ( GetDescription()->bBounce )
+			        {
+				        fDirection = -1.0f; 
+			        }
+			        else
+			        {
+				        if ( !GetDescription()->bLoop )
+				        {
+                            m_bEnabled = FALSE;
+				        }
+			        }
+                    m_fCurrentSpeed = 0.0f;
+		        }
+		        else if ( fDirection < 0.0f )
+		        {
+                    m_fCurrentSpeed = 0.0f;
+        			
+			        if ( GetDescription()->bLoop )
+			        {
+				        fDirection = 1.0f; 
+			        }
+		        }
+
+                m_bDecelerate = FALSE;
+            }
+        }
+        else
+        {
+
+		    // Calculate movement
+		    FLOAT fMaxSpeed = GetDescription()->fMoveDistance / GetDescription()->fMoveTime;
+
+            m_fCurrentSpeed += ACCELERATION;
+            m_fCurrentSpeed = Math::Min( m_fCurrentSpeed, fMaxSpeed );
+
+		    m_fCurrentDistance += fDirection * m_fCurrentSpeed * fFrameTime;
+		    if ( fDirection > 0.0f && m_fCurrentDistance >= GetDescription()->fMoveDistance )
+		    {
+                m_bDecelerate = TRUE;
+            }
+		    else if ( fDirection < 0.0f && m_fCurrentDistance <= 0.0f )
+		    {
+                m_bDecelerate = TRUE;
+            }
+        }
+
+		m_fDirection = fDirection;
+		if ( GetDescription()->bSwitchDirection )
+		{
+			m_fDirection = m_bEnabled ? fDirection : -fDirection;
+		}
+	}
+
+
+	// Move actors
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+
+		VECTOR vDir = Math::GetDirectionD( GetDescription()->fMoveAngle );
+		VECTOR vNewPos = sInfo.vStartPos + vDir * m_fCurrentDistance;
+		sInfo.pActor->SetTargetPosition( vNewPos );
+	}
+}
+
+void CMover::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.8f,0.5f,0.5f) );
+}
+
+void CMover::CreateComponents() 
+{
+}
+
+void CMover::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CMoverDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CMover::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void CMover::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+
+	VECTOR vPos = GetDescription()->vSelectionPosition;
+	VECTOR vDir = Math::GetDirectionD( GetDescription()->fMoveAngle );
+	CRender2d::DrawLine( vPos, vPos + vDir * GetDescription()->fMoveDistance, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+	CRender2d::DrawCircleFill(  vPos + vDir * m_fCurrentDistance, 3.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+}

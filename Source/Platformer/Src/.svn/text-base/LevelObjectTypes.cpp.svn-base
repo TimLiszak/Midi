@@ -1,0 +1,86 @@
+#include "StdAfx.h"
+#include "LevelObjectTypes.h"
+#include "World.h"
+#include "Level.h"
+#include "Turret.h"
+#include "CameraObject.h"
+#include "ProximityTrigger.h"
+#include "Checkpoint.h"
+#include "Laser.h"
+#include "Mover.h"
+#include "Rotator.h"
+#include "DoorKey.h"
+#include "Platform.h"
+#include "ObjectGroup.h"
+#include "ConveyorBelt.h"
+#include "SpawnPoint.h"
+#include "LevelExit.h"
+#include "Magnet.h"
+#include "LookAtRotator.h"
+#include "Oscillator.h"
+#include "SpringBox.h"
+#include "Decoration.h"
+#include "GravityModifier.h"
+
+BOOL	CLevelObjectTypes::s_bRegistered = FALSE;
+
+#define REGISTER_LEVEL_OBJECT( T, DESC ) \
+	{ \
+		T* pObj = new T(); \
+		pObj->Init( new DESC() ); \
+		pLevel->RegisterLevelObjectType( pObj ); \
+	}
+
+
+void CLevelObjectTypes::Register()
+{
+	if ( !s_bRegistered )
+	{
+		INIT_REFLECT( CTurretDescription );
+		INIT_REFLECT( CTriggerDescription );
+		INIT_REFLECT( CCameraObjectDescription );
+		INIT_REFLECT( CCheckpointDescription );
+		INIT_REFLECT( CLaserDescription );
+		INIT_REFLECT( CMoverDescription );
+		INIT_REFLECT( CRotatorDescription );
+		INIT_REFLECT( CDoorKeyDescription );
+		INIT_REFLECT( CPlatformDescription );
+		INIT_REFLECT( CObjectGroupDescription );
+		INIT_REFLECT( CConveyorBeltDescription );
+		INIT_REFLECT( CSpawnPointDescription );
+		INIT_REFLECT( CLevelExitDescription );
+		INIT_REFLECT( CMagnetDescription );
+		INIT_REFLECT( CLookAtRotatorDescription );
+		INIT_REFLECT( COscillatorDescription );
+		INIT_REFLECT( CSpringBoxDescription );
+		INIT_REFLECT( CPlayerTriggerDescription );
+		INIT_REFLECT( CObjectTriggerDescription );
+		INIT_REFLECT( CDecorationDescription );
+		INIT_REFLECT( CGravityModifierDescription );
+
+		CLevel* pLevel = GetGameEngine()->GetWorld()->GetLevel();
+
+		REGISTER_LEVEL_OBJECT( CTurret, CTurretDescription );
+		REGISTER_LEVEL_OBJECT( CCameraObject, CCameraObjectDescription );
+		REGISTER_LEVEL_OBJECT( CPlayerProximityTrigger, CPlayerTriggerDescription );
+		REGISTER_LEVEL_OBJECT( CCheckpoint, CCheckpointDescription );
+		REGISTER_LEVEL_OBJECT( CLaser, CLaserDescription );
+		REGISTER_LEVEL_OBJECT( CMover, CMoverDescription );
+		REGISTER_LEVEL_OBJECT( CRotator, CRotatorDescription );
+		REGISTER_LEVEL_OBJECT( CDoorKey, CDoorKeyDescription );
+		REGISTER_LEVEL_OBJECT( CPlatform, CPlatformDescription );
+		REGISTER_LEVEL_OBJECT( CObjectGroup, CObjectGroupDescription );
+		REGISTER_LEVEL_OBJECT( CObjectProximityTrigger, CObjectTriggerDescription );
+		REGISTER_LEVEL_OBJECT( CConveyorBelt, CConveyorBeltDescription );
+		REGISTER_LEVEL_OBJECT( CSpawnPoint, CSpawnPointDescription );
+		REGISTER_LEVEL_OBJECT( CLevelExit, CLevelExitDescription );
+		REGISTER_LEVEL_OBJECT( CMagnet, CMagnetDescription );
+		REGISTER_LEVEL_OBJECT( CLookAtRotator, CLookAtRotatorDescription );
+		REGISTER_LEVEL_OBJECT( COscillator, COscillatorDescription );
+		REGISTER_LEVEL_OBJECT( CSpringBox, CSpringBoxDescription );
+		REGISTER_LEVEL_OBJECT( CDecoration, CDecorationDescription );
+		REGISTER_LEVEL_OBJECT( CGravityModifier, CGravityModifierDescription );
+
+		s_bRegistered = TRUE;
+	}
+}

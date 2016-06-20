@@ -1,0 +1,30 @@
+
+#ifndef _LINEAR_MOVEMENT_H_
+#define _LINEAR_MOVEMENT_H_
+
+#include "Actor.h"
+
+class CLinearMovement : public CActorComponent
+{
+public:
+	CLinearMovement( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CLinearMovement() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+	void	SetVelocity( VECTOR vVel );
+
+protected:
+	VECTOR	m_vVelocity;
+	
+};
+
+inline void CLinearMovement::SetVelocity( VECTOR vVel )
+{
+	m_vVelocity = vVel;
+}
+
+#endif
+

@@ -1,0 +1,97 @@
+#include "StdAfx.h"
+#include "GravityModifier.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "ProjectileManager.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "Character.h"
+
+CReflectInfo CGravityModifierDescription::m_ref_info; 
+
+CActor*	CGravityModifier::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CGravityModifier>();
+}
+
+void CGravityModifier::InitActor( const ActorDescription* pDesc )
+{
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+}
+
+void CGravityModifier::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CGravityModifier::UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget )
+{
+	if ( m_bEnabled )
+	{
+	    VECTOR vPos = vTarget + ( GetDescription()->vMax + GetDescription()->vMin ) * 0.5f;
+	    VECTOR vExtents = ( GetDescription()->vMax - GetDescription()->vMin ) * 0.5f;
+
+		// Check collision
+		UINT uGroupsMask = 1 << EActorGroup_Character;
+		std::list<CActor*> Results;
+		CCollision::SAABBox Box( vExtents, vPos );
+		if ( GetGameEngine()->GetWorld()->CheckBoxCollision( Results, Box, uGroupsMask ) )
+		{
+			std::list<CActor*>::iterator it;
+			for ( it = Results.begin() ; it != Results.end(); it++ )
+			{
+				CCharacter* pChar = (CCharacter*)(*it);
+                pChar->AddGravityModifier( this );
+			}
+		}
+	}
+
+	SetPosition( vTarget );
+}
+
+void CGravityModifier::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.5f,0.8f,0.5f) );
+}
+
+void CGravityModifier::RenderEditorSelection()
+{
+	VECTOR vPos = GetPosition() + ( GetDescription()->vMax + GetDescription()->vMin ) * 0.5f;
+	VECTOR vExtents = ( GetDescription()->vMax - GetDescription()->vMin ) * 0.5f;
+	CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+}
+
+void CGravityModifier::CreateComponents() 
+{
+}
+
+void CGravityModifier::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CGravityModifierDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+FLOAT CGravityModifier::GetGravityScale( EPolarity ePolarity )
+{
+    switch( ePolarity )
+    {
+        case EPolarity_Red:
+            return GetDescription()->fGravityRed;
+
+        case EPolarity_Blue:
+            return GetDescription()->fGravityBlue;
+    }
+    ASSERT( FALSE );
+    return 1.0f;
+}
+

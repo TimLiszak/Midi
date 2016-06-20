@@ -1,0 +1,163 @@
+#include "StdAfx.h"
+#include "Outputter.h"
+#include "World.h"
+#include "CameraManager.h"
+#include "Render2d.h"
+#include "Input.h"
+
+COutputter::COutputter() : CLevelObject(),
+	m_bFindActors( TRUE ),
+	m_bSelectActors( FALSE )
+
+{
+}
+
+void COutputter::MoveActorGroup( VECTOR vMove )
+{
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		sInfo.vStartPos += vMove;
+	}
+	COutputterDescription* pDesc = (COutputterDescription*)GetDescription();
+	pDesc->vSelectionPosition += vMove;
+}
+
+void COutputter::FixActorIds( std::map<INT, INT>& IdMap )
+{
+	std::list<INT> nNewList;
+
+	COutputterDescription* pDesc = (COutputterDescription*)GetDescription();
+	std::list<INT>::iterator it;
+	for ( it = pDesc->m_ActorIds.begin() ; it != pDesc->m_ActorIds.end(); it++ )
+	{
+		INT nNewId = IdMap[(*it)];
+		nNewList.push_back( nNewId );
+	}
+
+	pDesc->m_ActorIds.clear();
+	for ( it = nNewList.begin() ; it != nNewList.end(); it++ )
+	{
+		pDesc->m_ActorIds.push_back( *it );
+	}
+}
+
+void COutputter::FindActors( COutputterDescription* pDesc )
+{
+	// Select actors and add them to the list
+	if ( m_bSelectActors )
+	{
+		pDesc->m_ActorIds.clear();
+		m_bFindActors = TRUE;
+
+		std::list<CLevelObject*> Results;
+		CCollision::SAABBox Box( pDesc->vSelectionExtents, pDesc->vSelectionPosition );
+		if ( GetGameEngine()->GetWorld()->GetLevel()->CheckBoxCollision( Results, Box, 0xFFFFFFFF ) )
+		{
+			std::list<CLevelObject*>::iterator it;
+			for ( it = Results.begin() ; it != Results.end(); it++ )
+			{
+				ASSERT( (*it)->IsDynamic() );
+				if ( (*it) != this && CanSelectActor( *it ) )
+				{
+					pDesc->m_ActorIds.push_back( (*it)->GetActorDescription()->nUniqueActorId );
+				}
+			}
+		}
+		m_bSelectActors = FALSE;
+	}
+
+	// Find actors
+	if ( m_bFindActors )
+	{
+		m_OutputActors.clear();
+		std::list<INT>::iterator it;
+		for ( it = pDesc->m_ActorIds.begin() ; it != pDesc->m_ActorIds.end(); )
+		{
+			CLevelObject* pObj = GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( *it );
+			if ( pObj != this )
+			{
+				if ( pObj )
+				{
+					AddNewObject( pObj );
+					it++;
+				}
+				else
+				{
+					it = pDesc->m_ActorIds.erase( it );
+				}
+			}
+		}
+		m_bFindActors = FALSE;
+	}
+}
+
+void COutputter::AddNewObject( CLevelObject* pObj )
+{
+	SActorInfo sInfo;
+	sInfo.pActor = pObj;
+	sInfo.vStartPos = pObj->GetPosition();
+
+	sInfo.fStartAngle = 0.0f;
+	if ( pObj->IsRotatable() )
+	{
+		sInfo.fStartAngle = ((CRotatableLevelObject*)pObj)->GetRotation();
+	}
+	m_OutputActors.push_back( sInfo );
+}
+
+void COutputter::RenderOutputter( COutputterDescription* pDesc )
+{
+	VECTOR vPos = pDesc->vSelectionPosition;
+	CRender2d::DrawRect( vPos, pDesc->vSelectionExtents, 0.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		vPos = GetPosition();
+		VECTOR vActorPos = sInfo.pActor->GetPosition();
+
+		CRender2d::DrawLine( vPos, vActorPos, COLOUR_RGB( 1.0f, 1.0f, 1.0f ) );
+	}
+}
+
+void COutputter::LevelObjectDeleted( class CLevelObject* pObject )
+{
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); )
+	{
+		SActorInfo& sInfo = (*it);
+		if( sInfo.pActor == pObject )
+		{
+			it = m_OutputActors.erase( it );
+		}
+		else
+		{
+			it++;
+		}
+	}
+}
+
+void COutputter::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void COutputter::RenderEditorSelection()
+{
+	RenderOutputter( (COutputterDescription*)GetDescription() );
+}
+
+void COutputter::SelectOtherObjects( VECTOR vPos, VECTOR vExtents )
+{
+	COutputterDescription* pDesc = (COutputterDescription*)GetDescription();
+	pDesc->vSelectionPosition = vPos;
+	pDesc->vSelectionExtents = vExtents;
+	m_bSelectActors = TRUE;
+}

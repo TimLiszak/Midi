@@ -1,0 +1,77 @@
+#ifndef _PLAYER_TRIGGER_H_
+#define _PLAYER_TRIGGER_H_
+
+#include "Trigger.h"
+
+class CPlayerTriggerDescription : public CTriggerDescription
+{
+public:
+	CPlayerTriggerDescription() : CTriggerDescription()
+	{
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CTriggerDescription::Serialize( Serializer );
+	}
+};
+
+inline void CPlayerTriggerDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CTriggerDescription::RegisterMembers( p_info );
+}
+
+
+class CPlayerProximityTrigger : public CTrigger
+{
+public:
+	typedef CPlayerTriggerDescription ActorDescription;
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_PlayerProximityTrigger; }
+
+protected:
+	virtual BOOL	CheckTrigger( std::list<INT>& listTriggerIds );
+private:
+	CPlayerTriggerDescription* GetDescription() { return (CPlayerTriggerDescription*)m_pDescription; }
+};
+
+
+
+class CObjectTriggerDescription : public CTriggerDescription
+{
+public:
+	CObjectTriggerDescription() : CTriggerDescription()
+	{
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CTriggerDescription::Serialize( Serializer );
+	}
+};
+
+inline void CObjectTriggerDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CTriggerDescription::RegisterMembers( p_info );
+}
+
+
+class CObjectProximityTrigger : public CTrigger
+{
+public:
+	typedef CObjectTriggerDescription ActorDescription;
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_ObjectProximityTrigger; }
+
+protected:
+	virtual BOOL	CheckTrigger( std::list<INT>& listTriggerIds );
+	virtual BOOL	DoOppositeTrigger() { return FALSE; }
+private:
+	CObjectTriggerDescription* GetDescription() { return (CObjectTriggerDescription*)m_pDescription; }
+};
+
+#endif

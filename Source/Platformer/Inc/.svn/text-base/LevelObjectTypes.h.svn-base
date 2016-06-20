@@ -1,0 +1,39 @@
+#ifndef _LEVEL_OBJECT_TYPES_H_
+#define _LEVEL_OBJECT_TYPES_H_
+
+enum ELevelObjectTypes
+{
+	ELevelObjectType_Turret,
+	ELevelObjectType_CameraObject,
+	ELevelObjectType_PlayerProximityTrigger,
+	ELevelObjectType_Checkpoint,
+	ELevelObjectType_Laser,
+	ELevelObjectType_Mover,
+	ELevelObjectType_Rotator,
+	ELevelObjectType_DoorKey,
+	ELevelObjectType_Platform,
+	ELevelObjectType_ObjectGroup,
+	ELevelObjectType_ObjectProximityTrigger,
+	ELevelObjectType_ConveyorBelt,
+	ELevelObjectType_SpawnPoint,
+	ELevelObjectType_LevelExit,
+	ELevelObjectType_Magnet,
+	ELevelObjectType_LookAtRotator,
+	ELevelObjectType_Oscillator,
+	ELevelObjectType_SpringBox,
+    ELevelObjectType_Decoration,
+    ELevelObjectType_GravityModifier,
+
+	ELevelObjectType_Max
+};
+
+class CLevelObjectTypes
+{
+public:
+	static void	Register();
+
+private:
+	static BOOL	s_bRegistered;
+};
+
+#endif

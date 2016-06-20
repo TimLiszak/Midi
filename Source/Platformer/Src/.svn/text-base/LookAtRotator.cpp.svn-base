@@ -1,0 +1,113 @@
+#include "StdAfx.h"
+#include "LookAtRotator.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "View.h"
+
+CReflectInfo CLookAtRotatorDescription::m_ref_info; 
+
+CActor*	CLookAtRotator::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CLookAtRotator>();
+}
+
+void CLookAtRotator::InitActor( const ActorDescription* pDesc )
+{
+	Reset();
+
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+}
+
+void CLookAtRotator::Reset()
+{
+	m_fCurrentAngle = 0.0f;
+}
+
+void CLookAtRotator::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void CLookAtRotator::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+
+	if ( m_bEnabled )
+	{
+		CCharacter* pPlayer = GetGameMain()->GetPlayer( EPlayer1 );
+		VECTOR vDir = pPlayer->GetPosition() - GetPosition();
+        FLOAT fTargetAng = Math::FitAngleD( Math::ATanD( vDir.x, vDir.y ) + GetDescription()->fAngleOffset );
+        fTargetAng = Math::Clamp( fTargetAng, GetDescription()->fLimitMin, GetDescription()->fLimitMax );
+        FLOAT fDiff = Math::FitAngleD( fTargetAng - m_fCurrentAngle );
+        FLOAT fLimit = GetDescription()->fMoveSpeed * fFrameTime;
+        fDiff = Math::Clamp( fDiff, -fLimit, fLimit );
+		m_fCurrentAngle += fDiff;
+	}
+
+	// Move actors
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		((CRotatableLevelObject*)sInfo.pActor)->SetRotation( m_fCurrentAngle );
+	}
+}
+
+void CLookAtRotator::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.8f,0.5f,0.5f) );
+}
+
+void CLookAtRotator::CreateComponents() 
+{
+}
+
+void CLookAtRotator::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CLookAtRotatorDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CLookAtRotator::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void CLookAtRotator::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+
+	VECTOR vPos = GetDescription()->vSelectionPosition;
+	VECTOR vDir = Math::GetDirectionD( m_fCurrentAngle );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+    vDir = Math::GetDirectionD( GetDescription()->fLimitMin );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.6f, 0.0f, 0.0f ) );
+    vDir = Math::GetDirectionD( GetDescription()->fLimitMax );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.0f, 0.6f, 0.0f ) );
+
+	//VECTOR vDir = Math::GetDirectionD( GetDescription()->fMoveAngle );
+	//CRender2d::DrawLine( vPos, vPos + vDir * GetDescription()->fMoveDistance, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+	//CRender2d::DrawCircleFill(  vPos + vDir * m_fCurrentDistance, 3.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+}

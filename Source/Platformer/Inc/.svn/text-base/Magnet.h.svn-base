@@ -1,0 +1,85 @@
+#ifndef _MAGNET_H_
+#define _MAGNET_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CMagnetDescription : public CActorDescription
+{
+public:
+	CMagnetDescription() : CActorDescription(), 
+		ePolarity( EPolarity_Red ),
+		fLength( 200.0f ),
+		fForce( 40.0f ),
+		nDirection( -1 ),
+		bVertical( TRUE )
+	{
+		uGroup = EActorGroup_Obstacle;
+		vExtents.Set( 20.0f, 20.0f );
+	}
+	REFLECTION_INFO;
+
+	UINT	ePolarity;
+	FLOAT	fLength;
+	FLOAT	fForce;
+	INT		nDirection;
+	BOOL	bVertical;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( fLength );
+		Serializer->Serialize( fForce );
+		Serializer->Serialize( nDirection );
+		Serializer->Serialize( bVertical );
+	}
+
+};
+
+inline void CMagnetDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 1 );
+	REGISTER( REF_FLOAT, fLength );
+	REGISTER( REF_FLOAT, fForce );
+	REGISTER_LIMIT( REF_INT, nDirection, -1, 1 );
+	REGISTER_LIMIT( REF_UINT, bVertical, 0, 1 );
+}
+
+class CMagnet : public CLevelObject
+{
+public:
+	typedef CMagnetDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Magnet; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+protected:
+	VECTOR	GetDirection();
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget );
+	virtual void	Render();
+	virtual void	DrawMagnetism( VECTOR vPos, VECTOR vDir, COLOUR_RGB Clr );
+
+	BOOL	m_bHitCharacter;
+	FLOAT	m_fHitPosition;
+	FLOAT	m_fDrawDistance;
+
+private:
+	CMagnetDescription* GetDescription() { return (CMagnetDescription*)m_pDescription; }
+
+};
+
+#endif

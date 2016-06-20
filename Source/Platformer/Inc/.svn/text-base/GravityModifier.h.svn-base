@@ -1,0 +1,79 @@
+#ifndef _GRAVITY_MODIFIER_H_
+#define _GRAVITY_MODIFIER_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CGravityModifierDescription : public CActorDescription
+{
+public:
+	CGravityModifierDescription() : CActorDescription(), 
+		fGravityRed( 1.0f ),
+		fGravityBlue( 1.0f )
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		vMin.Set( 0.0f, 0.0f );
+		vMax.Set( 50.0f, 50.0f );
+	}
+	REFLECTION_INFO;
+
+    FLOAT   fGravityRed;
+    FLOAT   fGravityBlue;
+    VECTOR  vMin;
+    VECTOR  vMax;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fGravityRed );
+		Serializer->Serialize( fGravityBlue );
+		Serializer->Serialize( vMin );
+		Serializer->Serialize( vMax );
+	}
+
+};
+
+inline void CGravityModifierDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_FLOAT, fGravityRed, 0.05f );
+	REGISTER_INC( REF_FLOAT, fGravityBlue, 0.05f );
+	REGISTER_INC( REF_VECTOR, vMin, 3.0f );
+	REGISTER_INC( REF_VECTOR, vMax, 3.0f );
+}
+
+class CGravityModifier : public CLevelObject
+{
+public:
+	typedef CGravityModifierDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_GravityModifier; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	RenderEditorSelection();
+
+    FLOAT   GetGravityScale( EPolarity ePolarity );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget );
+	virtual void	Render();
+
+private:
+	CGravityModifierDescription* GetDescription() { return (CGravityModifierDescription*)m_pDescription; }
+
+};
+
+#endif

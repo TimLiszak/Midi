@@ -1,0 +1,133 @@
+#include "StdAfx.h"
+#include "ObjectGroup.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "CameraManager.h"
+#include "Mover.h"
+
+CReflectInfo CObjectGroupDescription::m_ref_info; 
+
+CActor*	CObjectGroup::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CObjectGroup>();
+}
+
+void CObjectGroup::InitActor( const ActorDescription* pDesc )
+{
+	Reset();
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+}
+
+void CObjectGroup::Reset()
+{
+}
+
+void CObjectGroup::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void CObjectGroup::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+}
+
+void CObjectGroup::Render()
+{
+	CRender2d::DrawRectFill( m_vPosition, m_vExtents, 0.0f, COLOUR_RGB(0.5f,0.8f,0.8f) );
+}
+
+void CObjectGroup::CreateComponents() 
+{
+}
+
+void CObjectGroup::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CObjectGroupDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CObjectGroup::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void CObjectGroup::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+}
+
+CLevelObject* CObjectGroup::CopyObject()
+{
+	std::map<INT, INT> IdMap;
+
+	CObjectGroup* pNewGroup = (CObjectGroup*)COutputter::CopyObject();
+
+	pNewGroup->GetDescription()->m_ActorIds.clear();
+	pNewGroup->m_OutputActors.clear();
+
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		CLevelObject* pNewObj = sInfo.pActor->CopyObject();
+
+		INT nOldId = sInfo.pActor->GetActorDescription()->nUniqueActorId;
+		INT nNewId = pNewObj->GetActorDescription()->nUniqueActorId;
+		IdMap[nOldId] = nNewId;
+
+		pNewGroup->AddNewObject( pNewObj );
+		pNewGroup->GetDescription()->m_ActorIds.push_back( pNewObj->GetActorDescription()->nUniqueActorId );
+		GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( pNewObj );
+	}
+
+	for ( it = pNewGroup->m_OutputActors.begin() ; it != pNewGroup->m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		sInfo.pActor->FixActorIds( IdMap );
+	}
+
+	return pNewGroup;
+}
+
+void CObjectGroup::SetPosition( VECTOR vPos, BOOL bFromEditor )
+{
+	if ( bFromEditor )
+	{
+		CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+		if ( !pKey->IsKeyDown( EKbKey_CONTROL ) )
+		{
+			VECTOR vDiff = vPos - GetPosition();
+
+			std::list<SActorInfo>::iterator it;
+			for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+			{
+				SActorInfo& sInfo = (*it);
+				VECTOR vNewPos = sInfo.pActor->GetPosition() + vDiff;
+				
+				sInfo.pActor->SetPosition( vNewPos );
+				sInfo.pActor->GetActorDescription()->vPosition = vNewPos;
+				sInfo.pActor->MoveActorGroup( vDiff );
+			}
+		}
+	}
+
+	COutputter::SetPosition( vPos, bFromEditor );
+}

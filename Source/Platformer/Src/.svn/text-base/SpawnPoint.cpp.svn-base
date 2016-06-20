@@ -1,0 +1,54 @@
+#include "StdAfx.h"
+#include "SpawnPoint.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+
+CReflectInfo CSpawnPointDescription::m_ref_info; 
+
+CActor*	CSpawnPoint::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CSpawnPoint>();
+}
+
+void CSpawnPoint::InitActor( const ActorDescription* pDesc )
+{
+}
+
+void CSpawnPoint::TermActor()
+{
+}
+
+void CSpawnPoint::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CSpawnPoint::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(1.0f,0.0f,0.0f) );
+}
+
+void CSpawnPoint::CreateComponents() 
+{
+}
+
+void CSpawnPoint::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CSpawnPointDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CSpawnPoint::RenderEditorSelection()
+{
+}

@@ -1,0 +1,80 @@
+#ifndef _CONVEYOR_BELT_H_
+#define _CONVEYOR_BELT_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CConveyorBeltDescription : public CActorDescription
+{
+public:
+	CConveyorBeltDescription() : CActorDescription(), 
+		nDirectionRed( 0 ),
+		nDirectionBlue( 0 ),
+		fSpeed( 360.0f ),
+		bVertical( FALSE )
+	{
+		uGroup = EActorGroup_Obstacle;
+		vExtents.Set( 64.0f, 16.0f );
+	}
+	REFLECTION_INFO;
+
+	INT		nDirectionRed;
+	INT		nDirectionBlue;
+	FLOAT	fSpeed;
+	BOOL	bVertical;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( nDirectionRed );
+		Serializer->Serialize( nDirectionBlue );
+		Serializer->Serialize( fSpeed );
+		Serializer->Serialize( bVertical );
+	}
+
+};
+
+inline void CConveyorBeltDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_LIMIT( REF_INT, nDirectionRed, -1, 1 );
+	REGISTER_LIMIT( REF_INT, nDirectionBlue, -1, 1 );
+	REGISTER_LIMIT( REF_FLOAT, fSpeed, 0.0f, 9999.0f );
+	REGISTER_LIMIT( REF_UINT, bVertical, 0, 1 );
+}
+
+class CConveyorBelt : public CLevelObject
+{
+public:
+	typedef CConveyorBeltDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_ConveyorBelt; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	BOOL	IsVertical();
+	FLOAT	GetSpeed( EPolarity ePolarity );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+
+private:
+	CConveyorBeltDescription* GetDescription() { return (CConveyorBeltDescription*)m_pDescription; }
+};
+
+inline BOOL CConveyorBelt::IsVertical()
+{
+	return GetDescription()->bVertical;
+}
+
+#endif

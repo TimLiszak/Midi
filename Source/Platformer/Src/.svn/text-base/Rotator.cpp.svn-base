@@ -1,0 +1,134 @@
+#include "StdAfx.h"
+#include "Rotator.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "View.h"
+
+CReflectInfo CRotatorDescription::m_ref_info; 
+
+CActor*	CRotator::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CRotator>();
+}
+
+void CRotator::InitActor( const ActorDescription* pDesc )
+{
+	m_fCurrentAngle = pDesc->fStartAngle;
+	m_fDirection = 1.0f;
+
+	m_bFindActors = TRUE;
+	m_bSelectActors = FALSE;
+	m_bEnabled = TRUE;
+	m_bWasEnabled = FALSE;
+}
+
+void CRotator::Reset()
+{
+	m_fCurrentAngle = GetDescription()->fStartAngle;
+	m_fDirection = 1.0f;
+}
+
+void CRotator::TermActor()
+{
+	m_OutputActors.clear();
+}
+
+void CRotator::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+
+	if ( m_bEnabled )
+	{
+		// Calculate movement
+		m_fCurrentAngle += m_fDirection * GetDescription()->fMoveSpeed * fFrameTime;
+		if ( m_fDirection > 0.0f && m_fCurrentAngle >= GetDescription()->fAngle + GetDescription()->fAngleOffset )
+		{
+			if ( GetDescription()->bBounce )
+			{
+				m_fCurrentAngle = GetDescription()->fAngle + GetDescription()->fAngleOffset;
+				m_fDirection = -1.0f; 
+			}
+			else
+			{
+				m_fCurrentAngle = GetDescription()->fAngle;
+			}
+		}
+		else if ( m_fDirection < 0.0f && m_fCurrentAngle <= GetDescription()->fAngle )
+		{
+			m_fCurrentAngle = GetDescription()->fAngle;
+			m_fDirection = 1.0f; 
+		}
+	}
+
+	// Move actors
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		if ( GetDescription()->bReverse )
+		{
+			((CRotatableLevelObject*)sInfo.pActor)->SetRotation( sInfo.fStartAngle - m_fCurrentAngle );
+		}
+		else
+		{
+			((CRotatableLevelObject*)sInfo.pActor)->SetRotation( sInfo.fStartAngle + m_fCurrentAngle );
+		}
+	}
+}
+
+void CRotator::Render()
+{
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.y, COLOUR_RGB(0.8f,0.5f,0.5f) );
+}
+
+void CRotator::CreateComponents() 
+{
+}
+
+void CRotator::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CRotatorDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CRotator::UpdateEditorSelection()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_RETURN ) )
+	{
+		m_bSelectActors = TRUE;
+	}
+}
+
+void CRotator::RenderEditorSelection()
+{
+	RenderOutputter( GetDescription() );
+
+	VECTOR vPos = GetDescription()->vSelectionPosition;
+	VECTOR vDir = Math::GetDirectionD( GetDescription()->bReverse ? -m_fCurrentAngle : m_fCurrentAngle );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+	vDir = Math::GetDirectionD( GetDescription()->fAngle );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.6f, 0.0f, 0.0f ) );
+
+	vDir = Math::GetDirectionD( GetDescription()->fAngle + GetDescription()->fAngleOffset );
+	CRender2d::DrawLine( vPos, vPos + vDir * 50.0f, COLOUR_RGB( 0.0f, 0.6f, 0.0f ) );
+
+	//VECTOR vDir = Math::GetDirectionD( GetDescription()->fMoveAngle );
+	//CRender2d::DrawLine( vPos, vPos + vDir * GetDescription()->fMoveDistance, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+	//CRender2d::DrawCircleFill(  vPos + vDir * m_fCurrentDistance, 3.0f, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+
+}

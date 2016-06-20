@@ -1,0 +1,39 @@
+
+#ifndef _CHARACTER_PHYSICS_H_
+#define _CHARACTER_PHYSICS_H_
+
+#include "Actor.h"
+
+class CCharacterPhysics : public CActorComponent
+{
+public:
+	CCharacterPhysics( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CCharacterPhysics() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+	FLOAT	GetVelocityY();
+
+	void	Jump( FLOAT fVelY );
+	void	StopJump( FLOAT fScaleY );
+	void	Stop();
+	void	StopX();
+
+	void	SetForce( VECTOR vForce );
+	void	AddForce( VECTOR vForce );
+	void	AddForceX( FLOAT fForceX, FLOAT fLimit );
+	void	SetVelocityX( FLOAT fForceX );
+
+protected:
+	VECTOR	m_vVelocity;
+};
+
+inline FLOAT CCharacterPhysics::GetVelocityY()
+{
+	return m_vVelocity.y;
+}
+
+#endif
+

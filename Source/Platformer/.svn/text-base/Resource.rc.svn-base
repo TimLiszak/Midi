@@ -1,0 +1,159 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU 
+BEGIN
+    POPUP "Edit Tool"
+    BEGIN
+        MENUITEM "Tile Tool\t1",                ID_TILE_TOOL
+        MENUITEM "Select Tool\t2",              ID_EDITTOOL_SELECTTOOL
+        MENUITEM "Add Tool\t3",                 ID_EDITTOOL_ADDTOOL40051
+        MENUITEM "Shift Tool\t4",               ID_EDITTOOL_SHIFTTOOL
+        MENUITEM "Level Properties\t5",         ID_EDITTOOL_LEVELPROPERTIES
+        MENUITEM "Tile Properties\t6",          ID_EDITTOOL_TILEPROPERTIES
+        MENUITEM "Sprite Tool\t7",              ID_EDITTOOL_SPRITETOOL
+        MENUITEM "None\t0",                     ID_NO_TOOL
+    END
+    POPUP "Add Object"
+    BEGIN
+        POPUP "Triggers"
+        BEGIN
+            MENUITEM "Player Trigger",              ID_ADDOBJECT_CAMERATRIGGER
+            MENUITEM "Object Trigger",              ID_ADDOBJECT_OBJECTTRIGGER
+        END
+        POPUP "Modifiers"
+        BEGIN
+            MENUITEM "Mover",                       ID_ADDOBJECT_MOVER
+            MENUITEM "Rotator",                     ID_ADDOBJECT_ROTATOR
+            MENUITEM "Look At Rotator",             ID_ADDOBJECT_LOOKATROTATOR
+            MENUITEM "Oscillator",                  ID_ADDOBJECT_OSCILLATOR
+        END
+        MENUITEM "Turret",                      ID_ADDOBJECT_TURRET
+        MENUITEM "Camera Object",               ID_ADDOBJECT_CAMERAOBJECT
+        MENUITEM "Checkpoint",                  ID_ADDOBJECT_CHECKPOINT
+        MENUITEM "Laser",                       ID_ADDOBJECT_LASER
+        MENUITEM "Door Key",                    ID_ADDOBJECT_DOORKEY
+        MENUITEM "Platform",                    ID_ADDOBJECT_PLATFORM
+        MENUITEM "Object Group",                ID_ADDOBJECT_OBJECTGROUP
+        MENUITEM "Conveyor Belt",               ID_ADDOBJECT_CONVEYORBELT
+        MENUITEM "Spawn Point",                 ID_ADDOBJECT_SPAWNPOINT
+        MENUITEM "Level Exit",                  ID_ADDOBJECT_LEVELEXIT
+        MENUITEM "Magnet",                      ID_ADDOBJECT_MAGNET
+        MENUITEM "Spring Box",                  ID_ADDOBJECT_SPRINGBOX
+        MENUITEM "Decoration",                  ID_ADDOBJECT_DECORATION
+        MENUITEM "Gravity Modifier",            ID_ADDOBJECT_GRAVITYMODIFIER
+    END
+    POPUP "View"
+    BEGIN
+        POPUP "Aspect Ratio"
+        BEGIN
+            MENUITEM "Standard",                    ID_ASPECTRATIO_STANDARD
+            MENUITEM "Widescreen",                  ID_ASPECTRATIO_WIDESCREEN
+        END
+        MENUITEM "Toggle Grid",                 ID_VIEW_TOGGLEGRID
+        MENUITEM "Toggle Collision",            ID_VIEW_TOGGLECOLLISION
+        MENUITEM "Toggle Bounding Boxes",       ID_VIEW_TOGGLEBOUNDINGBOXES
+    END
+    POPUP "Camera"
+    BEGIN
+        MENUITEM "Player",                      ID_CAMERA_PLAYER
+        MENUITEM "Debug",                       ID_CAMERA_DEBUG
+    END
+    POPUP "Debug"
+    BEGIN
+        MENUITEM "Next Checkpoint",             ID_DEBUG_NEXTCHECKPOINT
+        POPUP "Goto Checkpoint"
+        BEGIN
+            MENUITEM "1",                           ID_GOTOCHECKPOINT_1
+            MENUITEM "2",                           ID_GOTOCHECKPOINT_2
+            MENUITEM "3",                           ID_GOTOCHECKPOINT_3
+            MENUITEM "4",                           ID_GOTOCHECKPOINT_4
+            MENUITEM "5",                           ID_GOTOCHECKPOINT_5
+            MENUITEM "6",                           ID_GOTOCHECKPOINT_6
+            MENUITEM "7",                           ID_GOTOCHECKPOINT_7
+            MENUITEM "8",                           ID_GOTOCHECKPOINT_8
+            MENUITEM "9",                           ID_GOTOCHECKPOINT_9
+            MENUITEM "10",                          ID_GOTOCHECKPOINT_10
+        END
+        MENUITEM "Open All Doors",              ID_DEBUG_OPENALLDOORS
+        MENUITEM "Debug Pause",                 ID_DEBUG_PAUSE
+    END
+    POPUP "Controller"
+    BEGIN
+        MENUITEM "Xbox",                        ID_CONTROLLER_XBOX
+        MENUITEM "PS3",                         ID_CONTROLLER_PS3
+        MENUITEM "PS3 (Other)",                 ID_CONTROLLER_PS4
+    END
+    POPUP "Level"
+    BEGIN
+        MENUITEM "Delete All Level Objects",    ID_LEVEL_DELETEALLLEVELOBJECTS
+        MENUITEM "Clear to Selected Tile",      ID_LEVEL_CLEARTOSELECTEDTILE
+    END
+END
+
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

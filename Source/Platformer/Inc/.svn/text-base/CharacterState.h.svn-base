@@ -1,0 +1,57 @@
+
+#ifndef _CHARACTER_STATE_H_
+#define _CHARACTER_STATE_H_
+
+#include "Actor.h"
+
+enum ECharacterState
+{
+	ECharacterState_Ground,
+	ECharacterState_InAir,
+	ECharacterState_OnWall,
+
+	ECharacterState_Max
+};
+
+class CCharacterState : public CActorComponent
+{
+public:
+	CCharacterState( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CCharacterState() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+	void	HandleCollision( BOOL bCollide, CCollision::SweepResult& sResult );
+
+	ECharacterState	GetState();
+	BOOL	IsOnGround( FLOAT fTime = 0.0f );
+	void	SetOnGround( CTileProperties* pTileProperties );
+    CTileProperties* GetGroundTileProperties();
+
+	void	SetInAir();
+	void	FallOffEdge();
+
+	BOOL	IsOnWall();
+	void	SetOnWall( INT nWallDirection );
+	INT		GetWallDirection();
+
+
+protected:
+	void	SetState( ECharacterState eState );
+
+	ECharacterState		m_eState;
+	FLOAT				m_fGroundChangeTime;
+	INT					m_nWallDirection;
+    CTileProperties*    m_pGroundTileProperties;
+
+};
+
+inline ECharacterState CCharacterState::GetState()
+{
+	return m_eState;
+}
+
+#endif
+

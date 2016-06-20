@@ -1,0 +1,23 @@
+
+#ifndef _WALL_SLIDE_MOVEMENT_H_
+#define _WALL_SLIDE_MOVEMENT_H_
+
+#include "Actor.h"
+
+class CWallSlideMovement : public CActorComponent
+{
+public:
+	CWallSlideMovement( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CWallSlideMovement() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+protected:
+	FLOAT	m_fHoldDirectionTime;
+	
+};
+
+#endif
+

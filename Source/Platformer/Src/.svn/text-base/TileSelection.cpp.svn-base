@@ -1,0 +1,174 @@
+#include "StdAfx.h"
+#include "TileSelection.h"
+#include "TileSet.h"
+#include "Input.h"
+#include "World.h"
+#include "Level.h"
+#include "TileMap.h"
+
+void CTileSelection::Init( CTileSet* pTileSet, VECTOR vGridSize, VECTOR vPosition, BOOL bSelectMultiple )
+{
+	m_pTileSet = pTileSet;
+	m_vSelectedTileStart.Set( 0, 0 );
+	m_vSelectedTileEnd.Set( 0, 0 );
+	m_vMouseOverTile.Set( 0, 0 );
+	m_nTilePage = 0;
+	m_vGridSize = vGridSize;
+	m_vPosition = vPosition;
+	m_bDrawAlternate = FALSE;
+	m_fDrawAlternateTime = 0.0f;
+    m_bSelectMultiple = bSelectMultiple;
+}
+
+void CTileSelection::Term()
+{
+}
+
+CTileSelection::EResult CTileSelection::Update()
+{
+	EResult eResult = EResult_None;
+
+	FLOAT fFrameTime = GetGameEngine()->GetFrameTime();
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseScreenPosition();
+
+	m_fDrawAlternateTime += fFrameTime;
+	if ( m_fDrawAlternateTime > 1.0f )
+	{
+		m_bDrawAlternate = !m_bDrawAlternate;
+		m_fDrawAlternateTime = 0.0f;
+	}
+
+	FLOAT tw = m_pTileSet->GetTileWidth();
+	FLOAT th = m_pTileSet->GetTileHeight();
+
+	if ( vMousePos.x >= m_vPosition.x && vMousePos.x <= m_vPosition.x + m_vGridSize.x * tw &&
+		 vMousePos.y >= m_vPosition.y && vMousePos.y <= m_vPosition.y + m_vGridSize.y * th )
+	{
+		eResult = EResult_MouseOver;
+
+        m_vMouseOverTile.Set( 
+            (INT)((vMousePos.x - m_vPosition.x) / tw),
+            (INT)((vMousePos.y - m_vPosition.y) / th) );
+
+		if ( pMouse->IsMouseTriggered( EMouseButton_Left ) )
+		{
+			m_vSelectedTileStart = m_vMouseOverTile;
+			m_vSelectedTileEnd = m_vMouseOverTile;
+			eResult = EResult_SelectTile;
+		}
+		else if ( pMouse->IsMouseReleased( EMouseButton_Left ) && m_bSelectMultiple )
+		{
+            VECTOR vMin, vMax;
+            vMin.x = Math::Min( m_vSelectedTileStart.x, m_vMouseOverTile.x );
+            vMin.y = Math::Min( m_vSelectedTileStart.y, m_vMouseOverTile.y );
+            vMax.x = Math::Max( m_vSelectedTileStart.x, m_vMouseOverTile.x );
+            vMax.y = Math::Max( m_vSelectedTileStart.y, m_vMouseOverTile.y );
+
+			m_vSelectedTileStart = vMin;
+			m_vSelectedTileEnd = vMax;
+		}
+	}
+
+	return eResult;
+}
+
+INT CTileSelection::GetTile( VECTOR vTileCoords )
+{
+	INT nMouseOverTile = (INT)( vTileCoords.x + vTileCoords.y * m_vGridSize.x );
+	nMouseOverTile += m_nTilePage * (INT)m_vGridSize.y * (INT)m_vGridSize.x;
+    return nMouseOverTile;
+}
+
+void CTileSelection::UpdateTabPage()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_TAB ) )
+	{
+		m_nTilePage++;
+		if ( m_nTilePage * m_vGridSize.y * m_vGridSize.x >= m_pTileSet->GetNumOfTiles() )
+		{
+			m_nTilePage = 0;
+		}
+	}
+}
+
+void CTileSelection::Render()
+{
+	INT nTile = m_nTilePage * (INT)m_vGridSize.y * (INT)m_vGridSize.x;
+	FLOAT tw = m_pTileSet->GetTileWidth();
+	FLOAT th = m_pTileSet->GetTileHeight();
+
+	for ( UINT r = 0; r < m_vGridSize.y; r++ )
+	{
+		for ( UINT c = 0; c < m_vGridSize.x; c++ )
+		{
+			VECTOR vPos = VECTOR( c*tw, r*th ) + m_vPosition;
+			VECTOR vExtents( tw * 0.5f, th * 0.5f );
+			
+			CTileProperties* pProp = m_pTileSet->GetTileProperties( nTile );
+            if ( pProp )
+            {
+			    m_pTileSet->DrawTile( nTile, vPos, m_bDrawAlternate, pProp->bHorizFlip, pProp->bVertFlip );
+            }
+            else
+            {
+			    m_pTileSet->DrawTile( nTile, vPos, m_bDrawAlternate );
+            }
+
+			nTile++;
+			if ( nTile >= m_pTileSet->GetNumOfTiles() ) break;
+		}
+		if ( nTile >= m_pTileSet->GetNumOfTiles() ) break;
+	}
+
+	{
+		VECTOR vPos1 = VECTOR( m_vSelectedTileStart.x * tw, m_vSelectedTileStart.y * th ) + m_vPosition;
+		VECTOR vPos2 = VECTOR( m_vSelectedTileEnd.x * tw, m_vSelectedTileEnd.y * th ) + m_vPosition;
+        vPos2.x += tw;
+        vPos2.y += th;
+
+		VECTOR vPos = ( vPos2 + vPos1 ) * 0.5f;
+		VECTOR vExtents = ( vPos2 - vPos1 ) * 0.5f;
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB(1.0f, 1.0f, 0.0f ) );
+	}
+}
+
+void CTileSelection::SetSelectedTile( INT nTileId )
+{
+    INT r = nTileId / (INT)m_vGridSize.x;
+    INT c = nTileId - ( r * (INT)m_vGridSize.x );
+    m_vSelectedTileStart.Set( c, r );
+    m_vSelectedTileEnd.Set( c, r );
+	m_nTilePage = nTileId / ((INT)m_vGridSize.y * (INT)m_vGridSize.x);
+}
+
+
+INT CTileSelection::GetSelectedTile()
+{
+    return GetTile( m_vSelectedTileStart );
+}
+
+INT CTileSelection::GetSelectedTile( VECTOR vOffset )
+{
+    INT nSizeX = (INT)( m_vSelectedTileEnd.x - m_vSelectedTileStart.x + 1 );
+    INT nSizeY = (INT)( m_vSelectedTileEnd.y - m_vSelectedTileStart.y + 1 );
+    INT nX = (INT)vOffset.x;
+    INT nY = (INT)vOffset.y;
+    nX %= nSizeX;
+    nY %= nSizeY;
+    if( nX < 0 )
+    {
+        nX += nSizeX;
+    }
+    if( nY < 0 )
+    {
+        nY += nSizeY;
+    }
+    return GetTile( m_vSelectedTileStart + VECTOR( nX, nY ) );
+}
+
+INT CTileSelection::GetMouseOverTile()
+{
+    return GetTile( m_vMouseOverTile );
+}

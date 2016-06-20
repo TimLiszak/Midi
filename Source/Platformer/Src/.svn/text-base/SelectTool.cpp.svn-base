@@ -1,0 +1,168 @@
+#include "StdAfx.h"
+#include "SelectTool.h"
+#include "ActorGroups.h"
+#include "Input.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Render2d.h"
+#include "Level.h"
+#include "FileSerializer.h"
+#include "DebugPrint.h"
+#include "View.h"
+#include "ReflectableEditor.h"
+#include "SpriteManager.h"
+#include "Level.h"
+#include "TileMap.h"
+#include "TileSet.h"
+
+void CSelectTool::Init()
+{
+	m_pSelectedActor = NULL;
+	GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+	m_nSelectedMember = 0;
+	m_fButtonHoldTime = 0.0f;
+	m_bSelectingOtherObjects = FALSE;
+}
+
+void CSelectTool::Term()
+{
+	GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+}
+
+void CSelectTool::Update( CEditor::SMouseState* pMouseState )
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+
+	if ( m_pSelectedActor && m_pSelectedActor->CanSelectOtherObjects() 
+		&& pKey->IsKeyDown( EKbKey_S ) && pMouse->IsMouseTriggered( EMouseButton_Left ) )
+	{
+		m_bSelectingOtherObjects = TRUE;
+	}
+	else if ( m_bSelectingOtherObjects && pMouse->IsMouseReleased( EMouseButton_Left ) )
+	{
+		ASSERT( m_pSelectedActor );
+
+		VECTOR vPos = ( pMouseState->vEnd[EMouseButton_Left] + pMouseState->vStart[EMouseButton_Left] ) * 0.5f;
+		VECTOR vExtents = ( pMouseState->vEnd[EMouseButton_Left] - pMouseState->vStart[EMouseButton_Left] ) * 0.5f;
+		m_pSelectedActor->SelectOtherObjects( vPos, vExtents );
+		m_bSelectingOtherObjects = FALSE;
+	}
+
+	if ( m_bSelectingOtherObjects )
+	{
+	}
+	else // Select/Move object
+	{
+		if ( pMouse->IsMouseTriggered( EMouseButton_Left ) )
+		{
+			std::list<CLevelObject*> Results;
+			CCollision::SAABBox Box( VECTOR(), vMousePos );
+			if ( GetGameEngine()->GetWorld()->GetLevel()->CheckBoxCollision( Results, Box, 0xFFFFFFFF ) )
+			{
+				m_pSelectedActor = Results.back();
+				m_vDragOffset = vMousePos - m_pSelectedActor->GetPosition();
+
+				if( pKey->IsKeyDown( EKbKey_SHIFT ) )
+				{
+					GetGameEngine()->GetWorld()->GetLevel()->AddLevelObject( m_pSelectedActor->CopyObject() );
+					GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+					m_pSelectedActor = NULL;
+				}
+			}
+			else
+			{
+				GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+				m_pSelectedActor = NULL;
+			}
+		}
+		else if ( pMouse->IsMouseDown( EMouseButton_Left ) )
+		{
+			if ( m_pSelectedActor )
+			{
+				VECTOR vNewPos = vMousePos - m_vDragOffset;
+				if ( pKey->IsKeyDown( EKbKey_CONTROL ) )
+				{
+					vNewPos -= m_pSelectedActor->GetExtents();
+					CTileSet* pTileSet = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTileSet();
+					vNewPos.x = (FLOAT)(INT)(vNewPos.x / pTileSet->GetTileWidth()) * pTileSet->GetTileWidth();
+					vNewPos.y = (FLOAT)(INT)(vNewPos.y / pTileSet->GetTileHeight()) * pTileSet->GetTileHeight();
+					vNewPos += m_pSelectedActor->GetExtents();
+				}
+				m_pSelectedActor->SetPosition( vNewPos, TRUE );
+			}
+		}
+	}
+
+	if ( m_pSelectedActor )
+	{
+		if ( pKey->IsKeyTriggered( EKbKey_DELETE ) )
+		{
+			GetGameEngine()->GetWorld()->GetLevel()->RemoveLevelObject( (CLevelObject*)m_pSelectedActor );
+			GetGameEngine()->GetWorld()->ReleaseActor( m_pSelectedActor );
+			m_pSelectedActor = NULL;
+			GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+		}
+		else
+		{
+			UpdateObjectProperties();
+		}
+	}
+	else
+	{
+		GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+	}
+}
+
+void CSelectTool::UpdateObjectProperties()
+{
+	ASSERT( m_pSelectedActor );
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	CActorDescription* pDesc = m_pSelectedActor->GetActorDescription();
+	CReflectInfo *p_info = pDesc->GetReflectInfo();
+
+	GetGameEngine()->GetReflectableEditor()->SetObject( pDesc );
+
+	COLOUR_RGB ClrNormal( 0.8f, 0.8f, 0.8f );
+	GetGameEngine()->GetDebugPrint()->ChangeColour( ClrNormal );
+	GetGameEngine()->GetDebugPrint()->Printf( "" );
+	GetGameEngine()->GetDebugPrint()->Printf( "(%d) %s", pDesc->nUniqueActorId, p_info->m_ClassName.c_str() );
+
+	if ( pKey->IsKeyTriggered( EKbKey_ESCAPE ) )
+	{
+		m_pSelectedActor->Reset();
+	}
+
+	pDesc->vPosition = m_pSelectedActor->GetPosition();
+	m_pSelectedActor->SetExtents( pDesc->vExtents );
+
+	m_pSelectedActor->UpdateEditorSelection();
+}
+
+void CSelectTool::Render( CEditor::SMouseState* pMouseState )
+{
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	GetGameEngine()->GetView()->PushCameraMatrix();
+	CRender2d::DrawCircleFill( vMousePos, 5.0f, COLOUR_RGB( 1.0f, 1.0f, 0.0f ) );
+
+	if ( m_pSelectedActor )
+	{
+		VECTOR vPos = m_pSelectedActor->GetPosition();
+		VECTOR vExtents = m_pSelectedActor->GetExtents();
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 0.7f, 0.7f, 0.0f ) );
+
+		m_pSelectedActor->RenderEditorSelection();
+
+
+		if ( m_bSelectingOtherObjects )
+		{
+			VECTOR vPos = ( pMouseState->vEnd[EMouseButton_Left] + pMouseState->vStart[EMouseButton_Left] ) * 0.5f;
+			VECTOR vExtents = ( pMouseState->vEnd[EMouseButton_Left] - pMouseState->vStart[EMouseButton_Left] ) * 0.5f;
+			CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 0.7f, 0.7f, 0.0f ) );
+		}
+
+	}
+
+	GetGameEngine()->GetView()->PopCameraMatrix();
+}

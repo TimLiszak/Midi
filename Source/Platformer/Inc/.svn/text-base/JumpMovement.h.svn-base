@@ -1,0 +1,24 @@
+
+#ifndef _JUMP_MOVEMENT_H_
+#define _JUMP_MOVEMENT_H_
+
+#include "Actor.h"
+
+class CJumpMovement : public CActorComponent
+{
+public:
+	CJumpMovement( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CJumpMovement() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+protected:
+	FLOAT	m_fJumpTriggeredTime;
+	
+	BOOL	m_bDBInfiniteJump;
+};
+
+#endif
+

@@ -1,0 +1,54 @@
+#ifndef _DECORATION_H_
+#define _DECORATION_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+
+class CDecorationDescription : public CActorDescription
+{
+public:
+	CDecorationDescription() : CActorDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 50.0f, 50.0f );
+	}
+	REFLECTION_INFO;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+	}
+
+};
+
+inline void CDecorationDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+}
+
+class CDecoration : public CLevelObject
+{
+public:
+
+	typedef CDecorationDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Decoration; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+
+private:
+	CDecorationDescription* GetDescription() { return (CDecorationDescription*)m_pDescription; }
+};
+
+#endif

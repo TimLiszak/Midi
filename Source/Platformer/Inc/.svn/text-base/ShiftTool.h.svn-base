@@ -1,0 +1,21 @@
+#ifndef _SHIFT_TOOL_H_
+#define _SHIFT_TOOL_H_
+
+#include "Editor.h"
+
+class CShiftTool : public CEditorTool
+{
+public:
+	void	Init();
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+
+protected:
+	INT		m_nTileX;
+	INT		m_nTileY;
+};
+
+
+#endif

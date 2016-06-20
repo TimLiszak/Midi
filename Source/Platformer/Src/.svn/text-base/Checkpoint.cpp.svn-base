@@ -1,0 +1,94 @@
+#include "StdAfx.h"
+#include "Checkpoint.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+
+CReflectInfo CCheckpointDescription::m_ref_info; 
+
+static const VECTOR	OFFSET( 0.0f, -75.0f );
+static const FLOAT	RADIUS = 75.0f;
+static const COLOUR_RGB CLR_POLE( 0.5f, 0.5f, 0.5f );
+static const COLOUR_RGB CLR_OFF( 0.9f, 0.9f, 0.9f );
+static const COLOUR_RGB CLR_ON( 1.0f, 1.0f, 0.0f );
+
+CActor*	CCheckpoint::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CCheckpoint>();
+}
+
+void CCheckpoint::InitActor( const ActorDescription* pDesc )
+{
+	m_bCompleted = FALSE;
+}
+
+void CCheckpoint::TermActor()
+{
+}
+
+void CCheckpoint::UpdateActor( const FLOAT fFrameTime )
+{
+	std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+	std::list<CCharacter*>::iterator it;
+	for ( it = pPlayers->begin() ; it != pPlayers->end(); it++ )
+	{
+		VECTOR vPos = GetPosition() + OFFSET;
+		VECTOR vPlayerPos = (*it)->GetPosition();
+		VECTOR vDiff = vPlayerPos - vPos;
+
+		if ( !(*it)->IsDead() )
+		{
+			if ( vDiff.GetLengthSquared() < RADIUS * RADIUS )
+			{
+				GetGameMain()->SetCheckpoint( (*it), vPos );
+				m_bCompleted = TRUE;
+				break;
+			}
+		}
+	}
+}
+
+void CCheckpoint::Render()
+{
+	CRender2d::DrawRectFill( m_vPosition, m_vExtents, 0.0f, CLR_POLE );
+
+	//pole
+	{
+		VECTOR vPos = m_vPosition;
+		vPos.y -= 25.0f;
+		VECTOR vExtents( 3.0f, 25.0f );
+		CRender2d::DrawRectFill( vPos, vExtents, 0.0f, CLR_POLE );
+	}
+
+	//top
+	{
+		VECTOR vPos = m_vPosition;
+		vPos.y -= 50.0f;
+		CRender2d::DrawCircleFill( vPos, 10.0f, CLR_POLE );
+		CRender2d::DrawCircleFill( vPos, 7.0f, m_bCompleted ? CLR_ON : CLR_OFF );
+	}
+
+	//CRender2d::DrawCircle( m_vPosition + OFFSET, RADIUS, COLOUR_RGB( 0.6f, 0.6f, 0.0f ) );
+}
+
+void CCheckpoint::CreateComponents() 
+{
+}
+
+void CCheckpoint::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CCheckpointDescription();
+	}
+
+	m_pDescription->Serialize( Serializer );
+
+	m_bCompleted = FALSE;
+}
+
+void CCheckpoint::RenderEditorSelection()
+{
+}

@@ -1,0 +1,613 @@
+#include "StdAfx.h"
+#include "Editor.h"
+#include "Input.h"
+#include "Level.h"
+#include "Render2d.h"
+#include "View.h"
+#include "TileSet.h"
+#include "TileSetBitmap.h"
+#include "World.h"
+#include "TileMap.h"
+#include "CameraManager.h"
+#include "DebugCamera.h"
+#include "LevelObjectTypes.h"
+#include "GameMain.h"
+#include "Character.h"
+#include "Checkpoint.h"
+#include "DoorKey.h"
+#include "ReflectableEditor.h"
+#include "SpriteManager.h"
+
+#include "TileTool.h"
+#include "AddTool.h"
+#include "SelectTool.h"
+#include "ShiftTool.h"
+#include "TilePropertiesTool.h"
+#include "SpriteTool.h"
+
+#include "..\resource.h"
+
+
+void CEditor::Init()
+{
+	m_uNextCheckpoint = 0;
+	m_nSelectedTile = -1;
+
+	STileInfo TileInfo;
+	TileInfo.fBorderWidth = 2.0f;
+	TileInfo.fTileHeight = 32.0f;
+	TileInfo.fTileWidth = 32.0f;
+	m_pCollisionTileSet = new CTileSetBitmap();
+	m_pCollisionTileSet->Init( TileInfo, "collision.bmp" );
+
+	memset( m_MouseState.bDown, 0, sizeof(m_MouseState.bDown) );
+	m_EditorCallback.Init( this );
+
+	GetGameEngine()->AddMenuCallback( &m_EditorCallback );
+	GetGameEngine()->AddDragDropCallback( &m_EditorCallback );
+
+	CTileSet* pTileSet = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTileSet();
+	
+	m_pCurrentTool = NULL;
+	m_pTileTool = new CTileTool();
+	m_pTileTool->Init( pTileSet );
+
+	m_pCollisionTool = new CTileCollisionTool();
+	m_pCollisionTool->Init( m_pCollisionTileSet );
+
+	m_pAddTool = new CAddTool();
+	m_pAddTool->Init();
+
+	m_pSelectTool = new CSelectTool();
+	m_pSelectTool->Init();
+
+	m_pShiftTool = new CShiftTool();
+	m_pShiftTool->Init();
+
+	m_pTilePropertiesTool = new CTilePropertiesTool();
+	m_pTilePropertiesTool->Init( pTileSet );
+
+	m_pSpriteTool = new CSpriteTool();
+	m_pSpriteTool->Init();
+	
+}
+
+void CEditorCallback::Init( class CEditor* pEditor )
+{
+	m_pEditor = pEditor;
+}
+
+void CEditor::Term()
+{
+	GetGameEngine()->RemoveMenuCallback( &m_EditorCallback );
+	GetGameEngine()->RemoveDragDropCallback( &m_EditorCallback );
+
+	m_pCollisionTileSet->Term();
+	m_pTileTool->Term();
+	m_pAddTool->Term();
+	m_pSelectTool->Term();
+	m_pShiftTool->Term();
+	m_pTilePropertiesTool->Term();
+	m_pSpriteTool->Term();
+
+	delete m_pCollisionTileSet;
+	delete m_pTileTool;
+	delete m_pAddTool;
+	delete m_pSelectTool;
+	delete m_pShiftTool;
+	delete m_pTilePropertiesTool;
+	delete m_pSpriteTool;
+}
+
+void CEditor::UpdateMouse()
+{
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+
+	for (UINT i = 0; i < EMouseButton_Max; i++)
+	{
+		if ( pMouse->IsMouseTriggered( (EMouseButton)i ) )
+		{
+			m_MouseState.bDown[i] = TRUE;
+			m_MouseState.vStart[i] = vMousePos;
+			m_MouseState.vEnd[i] = vMousePos;
+			m_MouseState.vOffset[i].Set(0,0);
+		}
+		if ( m_MouseState.bDown[i] )
+		{
+			if ( pMouse->IsMouseDown( (EMouseButton)i ) )
+			{
+				m_MouseState.vOffset[i] = vMousePos - m_MouseState.vEnd[i];
+				m_MouseState.vEnd[i] = vMousePos;
+			}
+			else if ( pMouse->IsMouseReleased( (EMouseButton)i ) )
+			{
+				m_MouseState.vOffset[i] = vMousePos - m_MouseState.vEnd[i];
+				m_MouseState.vEnd[i] = vMousePos;
+				m_MouseState.bDown[i] = FALSE;
+			}
+		}
+	}
+}
+
+
+void CEditor::Update()
+{
+	UpdateMouse();
+
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	if ( pMouse->IsMouseTriggered( EMouseButton_Middle ) )
+	{
+		VECTOR vScroll = GetGameEngine()->GetCameraManager()->GetCurrentScroll();
+        vScroll -= GetGameEngine()->GetView()->GetViewSize() * 0.5f;
+
+		((CDebugCamera*)GetGameEngine()->GetCameraManager()->GetCamera("debug"))->SetScroll( vScroll );
+		GetGameEngine()->GetCameraManager()->SetCurrentCamera( 0, "debug" );
+	}
+
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+
+	for (INT i = 0; i < EEditorTool_Max; i++)
+	{
+		if ( pKey->IsKeyTriggered( (EKbKey)(EKbKey_0 + i) ) )
+		{
+			ChangeTool( (EEditorTool)i );
+		}
+	}
+
+	if ( pKey->IsKeyTriggered( EKbKey_G ) )
+	{
+		CTileMap* pTileMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+		pTileMap->ToggleGrid();
+	}
+
+	if ( m_pCurrentTool )
+	{
+		m_pCurrentTool->Update( &m_MouseState );
+	}
+}
+
+void CEditor::ChangeTool( EEditorTool eTool )
+{
+	if ( eTool != EEditorTool_None )
+	{
+		GetGameMain()->ChangedLevel();
+	}
+	// Store data from previous tool
+	if ( m_pCurrentTool == m_pTileTool )
+	{
+		m_nSelectedTile = m_pTileTool->GetSelectedTile();
+	}
+	else if ( m_pCurrentTool == m_pTilePropertiesTool )
+	{
+		m_nSelectedTile = m_pTilePropertiesTool->GetSelectedTile();
+	}
+
+	GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+	m_pCurrentTool = NULL;
+
+	switch( eTool )
+	{
+		case EEditorTool_None:
+		{
+			m_pCurrentTool = NULL;
+		}
+		break;
+		case EEditorTool_TileTool:
+		{
+			m_pCurrentTool = m_pTileTool;
+			m_pTileTool->SetSelectedTile( m_nSelectedTile );
+		}
+		break;
+		case EEditorTool_SelectTool:
+		{
+			m_pCurrentTool = m_pSelectTool;
+		}
+		break;
+		case EEditorTool_AddTool:
+		{
+			m_pCurrentTool = m_pAddTool;
+		}
+		break;
+		case EEditorTool_ShiftTool:
+		{
+			m_pCurrentTool = m_pShiftTool;
+		}
+		break;
+		case EEditorTool_LevelProperties:
+		{
+			GetGameEngine()->GetReflectableEditor()->SetObject( GetGameEngine()->GetWorld()->GetLevel() );
+		}
+		break;
+		case EEditorTool_TilePropertiesTool:
+		{
+			m_pCurrentTool = m_pTilePropertiesTool;
+			m_pTilePropertiesTool->SetSelectedTile( m_nSelectedTile );
+		}
+		break;
+		case EEditorTool_SpriteTool:
+		{
+			m_pCurrentTool = m_pSpriteTool;
+		}
+		break;
+	};
+
+	if ( m_pCurrentTool )
+	{
+		GetGameEngine()->ShowEditorVisibleObjects( TRUE );
+	}
+	else
+	{
+		GetGameEngine()->ShowEditorVisibleObjects( FALSE );
+	}
+}
+
+void CEditor::Render()
+{
+	if ( m_pCurrentTool )
+	{
+		m_pCurrentTool->Render( &m_MouseState );
+	}
+}
+
+void CEditorCallback::DragDropFiles( const std::vector< std::string >& Files )
+{
+	if ( Files.size() == 1 )
+	{
+		// Switch to sprite tool
+		std::string Filename = Files.front();
+		if ( GetGameEngine()->GetSpriteManager()->IsValidSpriteFile( Filename ) )
+		{
+			m_pEditor->m_pCurrentTool = m_pEditor->m_pSpriteTool;
+		}
+	}
+
+	if ( m_pEditor->m_pCurrentTool )
+	{
+		m_pEditor->m_pCurrentTool->DragDropFiles( Files );
+	}
+}
+
+void CEditorCallback::MenuSelected( INT nMenuId )
+{
+	CTileMap* pTileMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+
+	switch( nMenuId )
+	{
+		case ID_TILE_TOOL:
+		{
+			if ( pTileMap )
+			{
+				m_pEditor->ChangeTool( CEditor::EEditorTool_TileTool );
+			}
+		}
+		break;
+
+		case ID_EDITTOOL_SELECTTOOL:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_SelectTool );
+		}
+		break;
+
+		case ID_EDITTOOL_SHIFTTOOL:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_ShiftTool );
+		}
+		break;
+
+		case ID_EDITTOOL_LEVELPROPERTIES:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_LevelProperties );
+		}
+		break;
+
+		case ID_EDITTOOL_ADDTOOL40051:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+		}
+		break;
+
+		case ID_EDITTOOL_TILEPROPERTIES:
+		{
+			if ( pTileMap )
+			{
+				m_pEditor->ChangeTool( CEditor::EEditorTool_TilePropertiesTool );
+			}
+		}
+		break;
+
+		case ID_EDITTOOL_SPRITETOOL:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_SpriteTool );
+		}
+		break;
+
+		case ID_NO_TOOL:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_None );
+		}
+		break;		
+
+		case ID_VIEW_TOGGLEGRID:
+		{
+			if ( pTileMap )
+			{
+				pTileMap->ToggleGrid();
+			}
+		}
+		break;
+
+		case ID_VIEW_TOGGLECOLLISION:
+		{
+			if ( pTileMap )
+			{
+				pTileMap->ToggleDrawCollision();
+			}
+		}
+		break;
+
+
+		case ID_VIEW_TOGGLEBOUNDINGBOXES:
+		{
+			GetGameEngine()->ToggleDrawBoundingBoxes();
+		}
+		break;
+		
+
+		case ID_ADDOBJECT_TURRET:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Turret );
+		}
+		break;
+
+		case ID_ADDOBJECT_CAMERAOBJECT:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_CameraObject );
+		}
+		break;
+
+		case ID_ADDOBJECT_CAMERATRIGGER:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_PlayerProximityTrigger );
+		}
+		break;
+
+		case ID_ADDOBJECT_OBJECTTRIGGER:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_ObjectProximityTrigger );
+		}
+		break;
+
+		case ID_ADDOBJECT_CHECKPOINT:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Checkpoint );
+		}
+		break;
+
+		case ID_ADDOBJECT_LASER:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Laser );
+		}
+		break;
+
+		case ID_ADDOBJECT_MOVER:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Mover );
+		}
+		break;
+
+		case ID_ADDOBJECT_ROTATOR:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Rotator );
+		}
+		break;
+
+		case ID_ADDOBJECT_DOORKEY:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_DoorKey );
+		}
+		break;
+
+		case ID_ADDOBJECT_PLATFORM:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Platform );
+		}
+		break;
+
+		case ID_ADDOBJECT_OBJECTGROUP:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_ObjectGroup );
+		}
+		break;
+
+		case ID_ADDOBJECT_CONVEYORBELT:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_ConveyorBelt );
+		}
+		break;
+
+		case ID_ADDOBJECT_SPAWNPOINT:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_SpawnPoint );
+		}
+		break;
+
+		case ID_ADDOBJECT_LEVELEXIT:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_LevelExit );
+		}
+		break;
+
+		case ID_ADDOBJECT_MAGNET:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Magnet );
+		}
+		break;
+
+		case ID_ADDOBJECT_LOOKATROTATOR:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_LookAtRotator );
+		}
+		break;
+		
+		case ID_ADDOBJECT_OSCILLATOR:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Oscillator );
+		}
+		break;
+
+		case ID_ADDOBJECT_SPRINGBOX:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_SpringBox );
+		}
+		break;
+
+		case ID_ADDOBJECT_DECORATION:
+		{
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_Decoration );
+		}
+		break;
+
+        case ID_ADDOBJECT_GRAVITYMODIFIER:
+        {
+			m_pEditor->ChangeTool( CEditor::EEditorTool_AddTool );
+			m_pEditor->m_pAddTool->SetObjectType( ELevelObjectType_GravityModifier );
+        }
+        break;
+		
+		case ID_CAMERA_PLAYER:
+		{
+			GetGameEngine()->GetCameraManager()->SetCameraCut( TRUE );
+			GetGameEngine()->GetCameraManager()->SetPreviousCamera();
+		}
+		break;
+
+		case ID_CAMERA_DEBUG:
+		{
+			GetGameEngine()->GetCameraManager()->SetCurrentCamera( 0, "debug" );
+		}
+		break;
+
+		case ID_DEBUG_NEXTCHECKPOINT:
+		{
+			CCheckpoint* pCheckpoint = (CCheckpoint*)GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( m_pEditor->m_uNextCheckpoint, ELevelObjectType_Checkpoint );
+			if ( pCheckpoint )
+			{
+				VECTOR vPos = pCheckpoint->GetPosition();
+				vPos.y -= 50.0f;
+				GetGameMain()->GotoNextCheckpoint( vPos );
+
+				m_pEditor->m_uNextCheckpoint++;
+			}
+			else
+			{
+				m_pEditor->m_uNextCheckpoint = 0;
+			}
+
+		}
+		break;
+
+		case ID_GOTOCHECKPOINT_1:
+		case ID_GOTOCHECKPOINT_2:
+		case ID_GOTOCHECKPOINT_3:
+		case ID_GOTOCHECKPOINT_4:
+		case ID_GOTOCHECKPOINT_5:
+		case ID_GOTOCHECKPOINT_6:
+		case ID_GOTOCHECKPOINT_7:
+		case ID_GOTOCHECKPOINT_8:
+		case ID_GOTOCHECKPOINT_9:
+		case ID_GOTOCHECKPOINT_10:
+		{
+			UINT uIndex = nMenuId - ID_GOTOCHECKPOINT_1;
+			CCheckpoint* pCheckpoint = (CCheckpoint*)GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( uIndex, ELevelObjectType_Checkpoint );
+			if ( pCheckpoint )
+			{
+				VECTOR vPos = pCheckpoint->GetPosition();
+				vPos.y -= 50.0f;
+				GetGameMain()->GotoNextCheckpoint( vPos );
+
+				m_pEditor->m_uNextCheckpoint = uIndex + 1;
+			}
+		}
+		break;
+
+		case ID_DEBUG_OPENALLDOORS:
+		{
+			UINT uIndex = 0;
+			CDoorKey* pKey = NULL;
+			do
+			{
+				pKey = (CDoorKey*)GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( uIndex, ELevelObjectType_DoorKey );
+
+				if ( pKey )
+				{
+					pKey->OpenDoor();
+					uIndex++;
+				}
+
+			} while ( pKey != NULL );
+
+		}
+		break;
+		
+
+		case ID_DEBUG_PAUSE:
+		{
+			GetGameEngine()->ToggleDebugPause();
+		}
+		break;
+
+		case ID_LEVEL_DELETEALLLEVELOBJECTS:
+		{
+			GetGameEngine()->GetCameraManager()->ClearCurrentCamera();
+			GetGameEngine()->GetCameraManager()->SetCurrentCamera( 0, "player" );
+			GetGameEngine()->GetWorld()->GetLevel()->RemoveAllLevelObjects();
+		}
+		break;
+
+		case ID_LEVEL_CLEARTOSELECTEDTILE:
+		{
+			if ( m_pEditor->m_pCurrentTool == m_pEditor->m_pTileTool )
+			{
+				INT nTile = m_pEditor->m_pTileTool->GetSelectedTile();
+				CTileMap* pTileMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+				if ( pTileMap )
+				{
+					pTileMap->ClearToTile( nTile );
+				}
+			}
+		}
+		break;
+
+		case ID_ASPECTRATIO_STANDARD:
+		{
+			GetGameEngine()->GetView()->SetWidescreen( FALSE );
+		}
+		break;
+
+		case ID_ASPECTRATIO_WIDESCREEN:
+		{
+			GetGameEngine()->GetView()->SetWidescreen( TRUE );
+		}
+		break;
+	}
+}

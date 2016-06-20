@@ -1,0 +1,52 @@
+#include "StdAfx.h"
+#include "PushingComponent.h"
+#include "Character.h"
+#include "GameMain.h"
+
+static const FLOAT PUSH_BUFFER_Y = 5.0f;
+
+void CPushingComponent::Init()
+{
+}
+
+void CPushingComponent::Update( const FLOAT fFrameTime )
+{
+	CCharacter* pChar1 = GetGameMain()->GetPlayer( EPlayer1 );
+	CCharacter* pChar2 = GetGameMain()->GetPlayer( EPlayer2 );
+
+	if ( !pChar2 || pChar1->IsDead() || pChar2->IsDead() ) 
+	{
+		return;
+	}
+
+	VECTOR vPos1 = pChar1->GetTargetPosition();
+	VECTOR vPos2 = pChar2->GetTargetPosition();
+	VECTOR vExtents1 = pChar1->GetExtents();
+	VECTOR vExtents2 = pChar2->GetExtents();
+
+	vExtents1.y -= PUSH_BUFFER_Y;
+	vExtents2.y -= PUSH_BUFFER_Y;
+
+	CCollision::SAABBox ActorBox1( vExtents1, vPos1 );
+	CCollision::SAABBox ActorBox2( vExtents2, vPos2 );
+	if ( CCollision::CheckAABoxOverlap( ActorBox1, ActorBox2 ) )
+	{
+		FLOAT fAvgX = ( vPos1.x + vPos2.x ) * 0.5f;
+		if ( vPos2.x < vPos1.x )
+		{
+			vPos1.x = fAvgX + vExtents1.x;
+			vPos2.x = fAvgX - vExtents2.x;
+		}
+		else
+		{
+			vPos1.x = fAvgX - vExtents1.x;
+			vPos2.x = fAvgX + vExtents2.x;
+		}
+		pChar1->SetTargetPosition( vPos1 );
+		pChar2->SetTargetPosition( vPos2 );
+	}
+}
+
+void CPushingComponent::Term()
+{
+}

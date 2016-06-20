@@ -1,0 +1,52 @@
+#include "StdAfx.h"
+#include "Decoration.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+
+CReflectInfo CDecorationDescription::m_ref_info; 
+
+CActor*	CDecoration::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CDecoration>();
+}
+
+void CDecoration::InitActor( const ActorDescription* pDesc )
+{
+}
+
+void CDecoration::UpdateActor( const FLOAT fFrameTime )
+{
+}
+
+void CDecoration::Render()
+{
+	if( m_pSprite )
+	{
+		return;
+	}
+
+	COLOUR_RGB Clr = COLOUR_RGB( 0.5f, 0.5f, 0.5f );
+	CRender2d::DrawRectFill( GetPosition(), GetExtents(), 0.0f, Clr );
+}
+
+void CDecoration::CreateComponents() 
+{
+}
+
+void CDecoration::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CDecorationDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}

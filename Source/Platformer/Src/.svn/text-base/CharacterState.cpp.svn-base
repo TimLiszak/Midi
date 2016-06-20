@@ -1,0 +1,193 @@
+#include "StdAfx.h"
+#include "CharacterState.h"
+#include "Character.h"
+#include "GameMain.h"
+#include "InputMovement.h"
+#include "CharacterPhysics.h"
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ConveyorBelt.h"
+#include "WalLSlideMovement.h"
+#include "GravityModifier.h"
+
+void CCharacterState::Init()
+{
+	m_eState = ECharacterState_Ground;
+	m_fGroundChangeTime = 0.0f;
+	m_nWallDirection = 0;
+    m_pGroundTileProperties = NULL;
+}
+
+void CCharacterState::Update( const FLOAT fFrameTime )
+{
+	switch( m_eState )
+	{
+		case ECharacterState_Ground:
+		{
+			GetGameEngine()->GetDebugPrint()->Printf( "on ground" );
+		}
+		break;
+
+		case ECharacterState_OnWall:
+		{
+			GetGameEngine()->GetDebugPrint()->Printf( "on wall" );
+		}
+		break;
+
+		case ECharacterState_InAir:
+		{
+			GetGameEngine()->GetDebugPrint()->Printf( "ECharacterState_InAir" );
+		}
+		break;
+	}
+
+}
+
+void CCharacterState::Term()
+{
+}
+
+void CCharacterState::SetOnGround( CTileProperties* pTileProperties )
+{
+	SetState( ECharacterState_Ground );
+    m_pGroundTileProperties = pTileProperties;
+}
+
+CTileProperties* CCharacterState::GetGroundTileProperties()
+{
+	return m_pGroundTileProperties;
+}
+
+void CCharacterState::SetInAir()
+{
+	SetState( ECharacterState_InAir );
+}
+
+void CCharacterState::FallOffEdge()
+{
+	SetState( ECharacterState_InAir );
+	m_fGroundChangeTime = GetGameEngine()->GetTotalTime();
+}
+
+
+BOOL CCharacterState::IsOnGround( FLOAT fTime )
+{
+	if ( m_eState != ECharacterState_Ground && fTime > 0.0f )
+	{
+		FLOAT fCurrTime = GetGameEngine()->GetTotalTime();
+		if ( fCurrTime - m_fGroundChangeTime < fTime )
+		{
+			return TRUE;
+		}
+	}
+	return ( m_eState == ECharacterState_Ground );
+}
+
+BOOL CCharacterState::IsOnWall()
+{
+	return m_eState == ECharacterState_OnWall;
+}
+
+void CCharacterState::SetOnWall( INT nWallDirection )
+{
+	m_nWallDirection = nWallDirection;
+	SetState( ECharacterState_OnWall );
+}
+
+INT CCharacterState::GetWallDirection()
+{
+	ASSERT( IsOnWall() );
+	return m_nWallDirection;
+}
+
+void CCharacterState::SetState( ECharacterState eState )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+
+	if ( eState == m_eState )
+	{
+		return;
+	}
+
+	// leaving state
+	switch( m_eState )
+	{
+        case ECharacterState_Ground:
+		{
+			m_pGroundTileProperties = NULL;
+		}
+		break;
+        
+		case ECharacterState_OnWall:
+		{
+			m_nWallDirection = 0;
+			pChar->GetInputMovement()->SetEnabled( TRUE );
+			pChar->GetWallSlideMovement()->SetEnabled( FALSE );
+
+		}
+		break;
+	}
+
+	// enter state
+	switch( eState )
+	{
+		case ECharacterState_OnWall:
+		{
+			pChar->GetInputMovement()->SetEnabled( FALSE );
+			pChar->GetWallSlideMovement()->SetEnabled( TRUE );
+		}
+		break;
+	}
+	m_eState = eState;
+}
+
+void CCharacterState::HandleCollision( BOOL bCollide, CCollision::SweepResult& sResult )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+    INT nDownDir = pChar->GetDownDirection();
+
+	if ( bCollide )
+	{
+		if ( sResult.nCollideY != 0 )
+		{
+			pChar->GetPhysics()->Stop();
+			if ( sResult.nCollideY == nDownDir )
+			{
+                SetOnGround( sResult.pTileProperties );
+			}
+		}
+
+		if ( sResult.nCollideX != 0 && sResult.nCollideY != -1 )
+		{
+			if ( GetState() == ECharacterState_InAir )
+			{
+				SetOnWall( sResult.nCollideX );
+			}
+
+			if ( sResult.pActor )
+			{
+				CLevelObject* pObject = (CLevelObject*)sResult.pActor;
+				if ( pObject->GetObjectId() == ELevelObjectType_ConveyorBelt )
+				{
+					CConveyorBelt* pConveyor = (CConveyorBelt*)pObject;
+					if ( pConveyor->IsVertical() )
+					{
+						FLOAT fSpeed = pConveyor->GetSpeed( pChar->GetPolarity() );
+						if ( fSpeed != 0.0f )
+						{
+							pChar->GetPhysics()->Jump( -fSpeed );
+							SetInAir();
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		if ( !IsOnGround() )
+		{
+			SetInAir();
+		}
+	}
+}

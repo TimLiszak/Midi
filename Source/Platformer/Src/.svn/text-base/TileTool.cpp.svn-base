@@ -1,0 +1,157 @@
+#include "StdAfx.h"
+#include "TileTool.h"
+#include "TileSet.h"
+#include "Input.h"
+#include "World.h"
+#include "TileMap.h"
+#include "View.h"
+#include "Render2d.h"
+#include "Level.h"
+#include "CameraManager.h"
+
+static const INT	ROWS = 8;
+static const INT	COLUMNS = 6;
+static const VECTOR OFFSET( 10.0f, 30.0f );
+
+
+void CTileTool::Init( CTileSet* pTileSet )
+{
+	m_pTileSet = pTileSet;
+	TileSelection.Init( pTileSet, VECTOR( COLUMNS, ROWS ), OFFSET, TRUE );
+}
+
+void CTileTool::Term()
+{
+	TileSelection.Term();
+}
+
+void CTileTool::Update( CEditor::SMouseState* pMouseState )
+{
+	m_eResult = TileSelection.Update();
+
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseScreenPosition();
+
+	FLOAT tw = m_pTileSet->GetTileWidth();
+	FLOAT th = m_pTileSet->GetTileHeight();
+
+	if ( m_eResult == CTileSelection::EResult_None )
+	{
+		if ( pMouse->IsMouseDown( EMouseButton_Left ) )
+		{
+			VECTOR vPos = pMouseState->vEnd[EMouseButton_Left];
+
+
+            VECTOR vTileStart = pMouseState->vStart[EMouseButton_Left];
+            VECTOR vTileEnd = pMouseState->vEnd[EMouseButton_Left];
+            vTileStart.Set( (INT)(vTileStart.x / tw), (INT)(vTileStart.y / th) );
+            vTileEnd.Set( (INT)(vTileEnd.x / tw), (INT)(vTileEnd.y / th) );
+            VECTOR vTileOffset = vTileEnd - vTileStart;
+
+		    if ( pKey->IsKeyDown( EKbKey_R ) )
+		    {
+            	INT nTileId = TileSelection.GetSelectedTile( vTileOffset );
+			    INT nOld = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTile( vPos );
+			    GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->SwitchTile( nOld, nTileId );
+		    }
+			else if ( pKey->IsKeyDown( EKbKey_SHIFT ) )
+			{
+				TileSelection.SetSelectedTile( GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTile( vPos ) );
+			}
+			else
+			{
+				DrawTile( vPos, vTileOffset );
+				if ( pKey->IsKeyDown( EKbKey_CONTROL ) )
+				{
+					DrawTile( vPos + VECTOR( th, 0.0f ),    vTileOffset + VECTOR( 1, 0) );
+					DrawTile( vPos + VECTOR( th, tw ),      vTileOffset + VECTOR( 1, 1) );
+					DrawTile( vPos + VECTOR( 0.0f, tw ),    vTileOffset + VECTOR( 0, 1) );
+					DrawTile( vPos + VECTOR( -th, tw ),     vTileOffset + VECTOR(-1, 1) );
+					DrawTile( vPos + VECTOR( -th, 0.0f ),   vTileOffset + VECTOR(-1, 0) );
+					DrawTile( vPos + VECTOR( -th, -tw ),    vTileOffset + VECTOR(-1,-1) );
+					DrawTile( vPos + VECTOR( 0.0f, -tw ),   vTileOffset + VECTOR( 0,-1) );
+					DrawTile( vPos + VECTOR( th, -tw ),     vTileOffset + VECTOR( 1,-1) );
+				}
+			}
+		}
+		if ( pMouse->IsMouseDown( EMouseButton_Right ) )
+		{
+			VECTOR vPos = pMouseState->vEnd[EMouseButton_Right];
+			ClearTile( vPos );
+
+			if ( pKey->IsKeyDown( EKbKey_CONTROL ) )
+			{
+				ClearTile( vPos + VECTOR( th, 0.0f ) );
+				ClearTile( vPos + VECTOR( th, tw ) );
+				ClearTile( vPos + VECTOR( 0.0f, tw ) );
+				ClearTile( vPos + VECTOR( -th, tw ) );
+				ClearTile( vPos + VECTOR( -th, 0.0f ) );
+				ClearTile( vPos + VECTOR( -th, -tw ) );
+				ClearTile( vPos + VECTOR( 0.0f, -tw ) );
+				ClearTile( vPos + VECTOR( th, -tw ) );
+			}
+		}
+	}
+
+	TileSelection.UpdateTabPage();
+}
+
+void CTileTool::Render( CEditor::SMouseState* pMouseState )
+{
+	TileSelection.Render();
+
+	GetGameEngine()->GetView()->PushCameraMatrix();
+
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	CTileSet* pTileSet = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->GetTileSet();
+	FLOAT tw = pTileSet->GetTileWidth();
+	FLOAT th = pTileSet->GetTileHeight();
+	INT nTileX = (INT)vMousePos.x / (INT)tw;
+	INT nTileY = (INT)vMousePos.y / (INT)th;
+
+	if ( m_eResult == CTileSelection::EResult_None )
+	{
+	    if ( nTileX >= 0 && nTileY >= 0 )
+	    {
+		    VECTOR vPos( nTileX * tw, nTileY * th );
+		    VECTOR vExtents( tw * 0.5f, th * 0.5f );
+		    vPos += vExtents;
+
+			if ( pKey->IsKeyDown( EKbKey_CONTROL ) )
+			{
+                vExtents *= 3.0f;
+    	    }
+
+		    CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 1.0f, 1.0f, 0.0f ) );
+	    }
+    }
+    
+	GetGameEngine()->GetView()->PopCameraMatrix();
+
+}
+
+void CTileTool::DrawTile( VECTOR vPos, VECTOR vTileOffset )
+{
+	INT nTileId = TileSelection.GetSelectedTile( vTileOffset );
+	CTileMap* pTileMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+	pTileMap->SetTile( vPos, nTileId );
+}
+
+void CTileTool::ClearTile( VECTOR vPos )
+{
+	GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->SetTile( vPos, -1 );
+	GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->SetCollision( vPos, 0 );
+}
+
+void CTileCollisionTool::DrawTile( VECTOR vPos, VECTOR vTileOffset )
+{
+	INT nTileId = TileSelection.GetSelectedTile( vTileOffset );
+	GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->SetCollision( vPos, nTileId );
+}
+
+void CTileCollisionTool::ClearTile( VECTOR vPos )
+{
+	GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->SetCollision( vPos, 0 );
+}

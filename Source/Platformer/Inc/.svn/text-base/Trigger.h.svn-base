@@ -1,0 +1,127 @@
+#ifndef _TRIGGER_H_
+#define _TRIGGER_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class CTriggerDescription : public COutputterDescription
+{
+public:
+	CTriggerDescription() : COutputterDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		fTriggerRadius = 250.0f;
+		vTriggerOffset.Set( 0.0f, 0.0f );
+		bOneTime = FALSE;
+		bEnable = TRUE;
+		bPermenent = FALSE;
+		ePolarity = 2;
+		fConeLength = 0.0f;
+		fConeAngle = 0.0f;
+		nDrawConnection = -1;
+		bVisible = FALSE;
+	}
+	REFLECTION_INFO;
+
+	FLOAT	fTriggerRadius;
+	VECTOR	vTriggerOffset;
+	BOOL	bOneTime;
+	BOOL	bEnable;
+	BOOL	bPermenent;
+	UINT	ePolarity;
+	FLOAT	fConeLength;
+	FLOAT	fConeAngle;
+	INT		nDrawConnection;
+	BOOL	bVisible;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+		Serializer->Serialize( fTriggerRadius );
+		Serializer->Serialize( vTriggerOffset );
+		Serializer->Serialize( bOneTime );
+		Serializer->Serialize( bEnable );
+		Serializer->Serialize( bPermenent );
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( fConeLength );
+		Serializer->Serialize( fConeAngle );
+		Serializer->Serialize( nDrawConnection );
+		Serializer->Serialize( bVisible );
+	}
+
+
+};
+
+inline void CTriggerDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+
+	REGISTER( REF_FLOAT, fTriggerRadius );
+	REGISTER_INC( REF_VECTOR, vTriggerOffset, 3.0f );
+	REGISTER_LIMIT( REF_UINT, bOneTime, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bEnable, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bPermenent, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 2 );
+	REGISTER_LIMIT( REF_FLOAT, fConeLength, 0.0f, 999.0f );
+	REGISTER_LIMIT( REF_FLOAT, fConeAngle, 0.0f, 90.0f );
+	REGISTER( REF_INT, nDrawConnection );
+	REGISTER_LIMIT( REF_UINT, bVisible, 0, 1 );
+}
+
+class CTrigger : public COutputter
+{
+public:
+	CTrigger();
+
+	typedef CTriggerDescription ActorDescription;
+
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual void	Reset();
+
+	virtual void	MoveActorGroup( VECTOR vMove );
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	virtual BOOL	CheckTrigger( std::list<INT>& listTriggerIds ) = 0;
+	virtual BOOL	DoOppositeTrigger() { return TRUE; }
+
+	void	TriggerActors( BOOL bEnable );
+
+	BOOL	m_bTriggered;
+	BOOL	m_bTriggerOn;
+
+	CLevelObject*	m_pDrawConnectionObject;
+	BOOL			m_bFindConnectionObject;
+	std::list<INT>	m_listTriggerIds;
+
+private:
+	CTriggerDescription* GetDescription() { return (CTriggerDescription*)m_pDescription; }
+};
+
+inline BOOL CTrigger::CanSelectActor( CActor* pActor )
+{
+	return TRUE;
+}
+
+#endif

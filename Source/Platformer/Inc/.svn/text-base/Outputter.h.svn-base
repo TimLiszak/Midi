@@ -1,0 +1,71 @@
+#ifndef _OUTPUTTER_H_
+#define _OUTPUTTER_H_
+
+#include "Level.h"
+#include "GameMain.h"
+
+class COutputterDescription : public CActorDescription
+{
+public:
+	COutputterDescription() : CActorDescription()
+	{
+		vSelectionPosition.Set( 0.0f, 0.0f );
+		vSelectionExtents.Set( 50.0f, 50.0f );
+	}
+
+	VECTOR	vSelectionPosition;
+	VECTOR	vSelectionExtents;
+	std::list< INT > m_ActorIds;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( m_ActorIds );
+		Serializer->Serialize( vSelectionPosition );
+		Serializer->Serialize( vSelectionExtents );
+	}
+};
+
+class COutputter : public CLevelObject
+{
+public:
+	COutputter();
+
+	virtual BOOL	CanSelectOtherObjects() { return TRUE; }
+	virtual void	SelectOtherObjects( VECTOR vPos, VECTOR vExtents );
+
+	virtual void	MoveActorGroup( VECTOR vMove );
+	virtual void	FixActorIds( std::map<INT, INT>& IdMap );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor ) = 0;
+
+	void	FindActors( COutputterDescription* pDesc );
+	void	RenderOutputter( COutputterDescription* pDesc );
+	void	AddNewObject( CLevelObject* pObj );
+
+	virtual void	LevelObjectDeleted( class CLevelObject* pObject );
+
+	BOOL	m_bFindActors;
+	BOOL	m_bSelectActors;
+
+	struct SActorInfo
+	{
+		CLevelObject* pActor;
+		VECTOR	vStartPos;
+		FLOAT	fStartAngle;
+	};
+	std::list< SActorInfo > m_OutputActors;
+
+private:
+	COutputterDescription* GetDescription() { return (COutputterDescription*)m_pDescription; }
+
+
+};
+
+#endif

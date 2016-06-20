@@ -1,0 +1,35 @@
+#include "StdAfx.h"
+#include "CharacterInput.h"
+
+CCharacterInput::CCharacterInput() : 
+	m_fRunDirection( 0.0f ),
+	m_bSwitchPolarity( FALSE ),
+	m_bJumpTriggered( FALSE ),
+	m_bJumpReleased( FALSE )
+{
+}
+
+BOOL CCharacterInput::IsRunning()
+{
+	return m_fRunDirection != 0.0f;
+}
+
+FLOAT CCharacterInput::GetRunDirection()
+{
+	return m_fRunDirection;
+}
+
+BOOL CCharacterInput::SwitchPolarity()
+{
+	return m_bSwitchPolarity;
+}
+
+BOOL CCharacterInput::JumpTriggered()
+{
+	return m_bJumpTriggered;
+}
+
+BOOL CCharacterInput::JumpReleased()
+{
+	return m_bJumpReleased;
+}

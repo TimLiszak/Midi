@@ -1,0 +1,407 @@
+
+#include "StdAfx.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "Input.h"
+#include "DebugPrint.h"
+#include "Character.h"
+#include "World.h"
+#include "Level.h"
+#include "Editor.h"
+#include "TileSet.h"
+#include "FileSerializer.h"
+#include "CameraManager.h"
+#include "PlayerCamera.h"
+#include "DebugPrint.h"
+#include "TileMap.h"
+#include "ProjectileManager.h"
+#include "Turret.h"
+#include "ActorGroups.h"
+#include "LevelObjectTypes.h"
+#include "DebugLevelMenu.h"
+#include "View.h"
+#include "SpawnPoint.h"
+#include "InputParser.h"
+#include <olectl.h>								// Header File For The OLE Controls Library	(Used In BuildTexture)
+
+static VECTOR START_POS( 800.0f, 300.0f );
+
+void CGameMain::BackupLevel( std::string strFile )
+{
+	time_t nTime;
+	time( &nTime );
+	CHAR buf[100];
+	sprintf_s( buf, 100, "%d", nTime );
+
+	std::string FileName = "Data/" + strFile;
+	std::string BackupName = "Data/Backup/" + strFile + "." + buf;
+	CopyFile( FileName.c_str(), BackupName.c_str(), TRUE );
+}
+
+void CGameMain::SaveLevel( std::string strFile )
+{
+	VECTOR vPos( 0.0f, 1.0f );
+
+	BackupLevel( strFile );
+
+	CFileOutputSerializer Serializer;
+	BOOL bOpened = Serializer.Open( "Data/" + strFile, CURRENT_FILE_VERSION );
+	if ( bOpened )
+	{
+		GetGameEngine()->GetDebugPrint()->ShowMessage( vPos, 5.0f, "Saved %s", m_strLevel.c_str() );
+
+		GetGameEngine()->GetWorld()->GetLevel()->Serialize( &Serializer );
+		Serializer.Close();
+	}
+	else
+	{
+		GetGameEngine()->GetDebugPrint()->ShowMessage( vPos, 5.0f, "FAILED to open %s", m_strLevel.c_str() );
+	}
+}
+
+void CGameMain::LoadLevel( std::string strFile )
+{
+	CFileInputSerializer Serializer;
+	BOOL bLoaded = Serializer.Open( "Data/" + strFile );
+
+	if ( bLoaded )
+	{
+		GetGameEngine()->GetWorld()->GetLevel()->Serialize( &Serializer );
+		Serializer.Close();
+	}
+}
+
+void CGameMain::Init()
+{
+	CLevelObjectTypes::Register();
+	m_fDeathTime = 0.0f;
+	m_bTriggerCameraImmediately = TRUE;
+	GetGameEngine()->GetCameraManager()->SetCameraCut( TRUE );
+	GetGameEngine()->GetInput()->DisableInput( FALSE );
+	m_nNextLevel = -1;
+	m_bChangedLevel = FALSE;
+
+	m_pInputParser = new CInputParser();
+
+	std::vector< CCharacter* > Players;
+	UINT nNumPlayers = m_bCoopMode ? 2 : 1;
+
+	for ( UINT i = 0; i < nNumPlayers; i++ )
+	{
+		CCharacterDescription* pDesc = new CCharacterDescription();
+		pDesc->vPosition = START_POS;
+		pDesc->nCharacterId = i;
+		CCharacter* pPlayer = GetGameEngine()->GetWorld()->SpawnActor<CCharacter>( pDesc );
+		m_listPlayers.push_back( pPlayer );
+		Players.push_back( pPlayer );
+	}
+
+	if ( m_bCoopMode )
+	{
+		Players[0]->SetSpawnOffset( VECTOR(30.0f, 0.0f ) );
+		Players[1]->SetSpawnOffset( VECTOR(-30.0f, 0.0f ) );
+		m_pInputParser->SetPlayer1( Players[0] );
+		m_pInputParser->SetPlayer2( Players[1] );
+	}
+	else
+	{
+		m_pInputParser->SetPlayer1( Players[0] );
+	}
+
+
+	// player camera
+	CPlayerCamera* pCamera = new CPlayerCamera( m_listPlayers.front() );
+	GetGameEngine()->GetCameraManager()->AddCamera( "player", pCamera );
+	m_pCameras.push_back( pCamera );
+
+	GetGameEngine()->GetCameraManager()->SetCurrentCamera( 0, "player" );
+
+	/*
+	{
+		CPlayerCamera* pCamera = new CPlayerCamera( m_pPlayer );
+		//pCamera->SetMaxY( 0.0f );
+		//pCamera->SetMinY( 0.0f );
+		pCamera->SetOffset( VECTOR(0.0f, 0.0f) );
+		GetGameEngine()->GetCameraManager()->AddCamera( "player2", pCamera );
+		m_pCameras.push_back( pCamera );
+	}*/
+
+/*
+	// load level
+	{
+		STileInfo TileInfo;
+		TileInfo.fBorderWidth = 2.0f;
+		TileInfo.fTileHeight = 32.0f;
+		TileInfo.fTileWidth = 32.0f;
+		GetGameEngine()->GetWorld()->GetLevel()->CreateTileMap( 
+			TileInfo, "Tiles03.bmp", VECTOR(400, 300) );
+
+		
+	}
+*/
+
+	LoadLevel( m_strLevel );
+
+	m_pEditor = new CEditor();
+	m_pEditor->Init();
+
+	m_pProjectileManager = new CProjectileManager();
+	m_pProjectileManager->Init();
+
+	CSpawnPoint* pSpawn = (CSpawnPoint*)GetGameEngine()->GetWorld()->GetLevel()->GetLevelObject( 0, ELevelObjectType_SpawnPoint );
+
+	if ( pSpawn )
+	{
+		m_vCheckpoint = pSpawn->GetPosition();
+		std::list<CCharacter*>::iterator it;
+		for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+		{
+			(*it)->Reset( m_vCheckpoint, EPolarity_Red );
+		}
+	}
+	else
+	{
+		m_vCheckpoint = START_POS;
+	}
+	m_eCheckpointPolarity = EPolarity_Red;
+	m_strCheckpointCamera = "player";
+
+	//CTileMap* pMap = GetGameEngine()->GetWorld()->GetLevel()->GetTileMap();
+	//pMap->Resize( pMap->GetSize() + VECTOR( 100, 0 ) ) ;
+}
+
+void CGameMain::Term()
+{
+	{
+		std::list<CCharacter*>::iterator it;
+		for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+		{
+			GetGameEngine()->GetWorld()->ReleaseActor( (*it) );
+		}
+		m_listPlayers.clear();
+	}
+
+	GetGameEngine()->GetCameraManager()->RemoveCamera( "player" );
+	GetGameEngine()->GetCameraManager()->ClearCurrentCamera();
+
+	GetGameEngine()->GetWorld()->GetLevel()->ReleaseActors();
+
+	m_pEditor->Term();
+	m_pProjectileManager->Term();
+
+	delete m_pEditor;
+	delete m_pProjectileManager;
+	delete m_pInputParser;
+
+	{
+		std::list<CCamera*>::iterator it;
+		for ( it = m_pCameras.begin() ; it != m_pCameras.end(); it++ )
+		{
+			delete (*it);
+		}
+		m_pCameras.clear();
+	}
+}
+
+void CGameMain::OnClose()
+{
+	PromptToSave();
+}
+
+void CGameMain::CheckDeath( const FLOAT fFrameTime )
+{
+	if ( m_bCoopMode && GetGameEngine()->GetWorld()->GetLevel()->RespawnCoopImmediately() )
+	{
+		std::list<CCharacter*>::iterator it;
+		for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+		{
+			if ( (*it)->GetHealth() == 0.0f )
+			{
+				(*it)->Reset( m_vCheckpoint, m_eCheckpointPolarity );
+				GetGameEngine()->GetCameraManager()->SetCameraCut( TRUE );
+			}
+		}
+	}
+	else
+	{
+		BOOL bAllDead = TRUE;
+		std::list<CCharacter*>::iterator it;
+		for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+		{
+			if ( (*it)->GetHealth() > 0.0f )
+			{
+				bAllDead = FALSE;
+				break;
+			}
+		}
+		if ( bAllDead )
+		{
+			m_fDeathTime += fFrameTime;
+			if ( m_fDeathTime > 1.0f )
+			{
+				GetGameEngine()->GetCameraManager()->SetCurrentCamera( 0, m_strCheckpointCamera );
+				if ( m_bCoopMode )
+				{
+					GetGameEngine()->GetCameraManager()->SetCurrentCamera( 1, m_strCheckpointCamera );
+				}
+				GetGameEngine()->GetCameraManager()->SetCameraCut( TRUE );
+
+				m_fDeathTime = 0.0f;
+				GetGameEngine()->GetWorld()->GetLevel()->Reset();
+				m_pProjectileManager->Reset();
+
+				std::list<CCharacter*>::iterator it;
+				for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+				{
+					(*it)->Reset( m_vCheckpoint, m_eCheckpointPolarity );
+				}
+			}
+		}
+	}
+}
+
+void CGameMain::CheckNextLevel()
+{
+	if ( m_nNextLevel > 0 )
+	{
+		// TODO: decide which level to go to, or back to menu?
+		/*
+		CHAR buf[100];
+		std::string strFilename;
+		if ( m_nNextLevel > 200 )
+		{
+			sprintf_s( buf, 100, "CoopLevel%02d.dat", m_nNextLevel - 200 );
+			strFilename = buf;
+		}
+		else
+		{
+			sprintf_s( buf, 100, "Level%02d.dat", m_nNextLevel );
+			strFilename = buf;
+		}
+
+		PromptToSave();
+
+		CGameMain* pGameMode = new CGameMain( strFilename.c_str(), m_bCoopMode );
+		GetGameEngine()->SwitchGameMode( pGameMode );
+		*/
+
+		BackToMenu();
+	}
+}
+
+void CGameMain::HandleInput()
+{
+	CGamepad* pGamepad = GetGameEngine()->GetInput()->GetGamepad(0);
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyDown( EKbKey_CONTROL ) && pKey->IsKeyTriggered( EKbKey_S ) )
+	{
+		SaveLevel( m_strLevel );
+	}
+	else if ( pKey->IsKeyTriggered( EKbKey_BACK ) || pGamepad->IsKeyTriggered( EPad_Select ) )
+	{
+        if ( !GetGameEngine()->IsDisableBackspaceQuit() )
+        {
+		    BackToMenu();
+        }
+	}
+}
+
+void CGameMain::PromptToSave()
+{
+	if ( m_bChangedLevel )
+	{
+		if ( MessageBox( NULL, "Would You Like To Save Changes?", "Save Changes?", MB_YESNO | MB_ICONQUESTION ) == IDYES )
+		{
+			SaveLevel( m_strLevel );
+		}
+	}
+}
+
+void CGameMain::BackToMenu()
+{
+	PromptToSave();
+
+	CGameMode* pGameMode = new CDebugLevelMenu();
+	GetGameEngine()->SwitchGameMode( pGameMode );
+}
+
+void CGameMain::Update( const FLOAT fFrameTime )
+{
+	GetGameEngine()->GetDebugPrint()->Printf( "position %f %f\n", m_listPlayers.front()->GetPosition().x, m_listPlayers.front()->GetPosition().y );
+
+	m_pInputParser->Update();
+	m_pEditor->Update();
+	HandleInput();
+
+	CheckDeath( fFrameTime );
+	CheckNextLevel();
+
+	m_pProjectileManager->Update( fFrameTime );
+}
+
+void CGameMain::Render()
+{
+	m_pEditor->Render();
+}
+
+void CGameMain::SetCheckpoint( CCharacter* pPlayer, VECTOR vPos )
+{
+	m_vCheckpoint = vPos;
+	m_eCheckpointPolarity = pPlayer->GetPolarity();
+	m_strCheckpointCamera = GetGameEngine()->GetCameraManager()->GetCurrentCameraName( pPlayer->GetCharacterId() );
+
+	// Respawn dead players at checkpoint
+	std::list<CCharacter*>::iterator it;
+	for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+	{
+		if ( (*it)->IsDead() )
+		{
+			(*it)->Reset( m_vCheckpoint, m_eCheckpointPolarity );
+		}
+	}
+
+}
+
+void CGameMain::GotoNextCheckpoint( VECTOR vPos )
+{
+	SetCheckpoint( m_listPlayers.front(), vPos );
+	m_fDeathTime = 1.0f;
+	std::list<CCharacter*>::iterator it;
+	for ( it = m_listPlayers.begin() ; it != m_listPlayers.end(); it++ )
+	{
+		(*it)->TakeHit( EPolarity_Red );
+		(*it)->TakeHit( EPolarity_Blue );
+	}
+	m_bTriggerCameraImmediately = TRUE;
+}
+
+CCharacter* CGameMain::GetClosestCharacter( VECTOR vPosition )
+{
+	std::list<CCharacter*>::iterator it;
+	it = m_listPlayers.begin();
+	VECTOR vDiff = vPosition - (*it)->GetPosition();
+	FLOAT fDistSq = vDiff.GetLengthSquared();
+	CCharacter* pFoundCharacter = (*it);
+	it++;
+
+	for ( ; it != m_listPlayers.end(); it++ )
+	{
+		vDiff = vPosition - (*it)->GetPosition();
+		if( vDiff.GetLengthSquared() < fDistSq )
+		{
+			pFoundCharacter = (*it);
+		}
+	}
+	return pFoundCharacter;
+}
+
+BOOL CGameMain::TriggerCameraImmediately()
+{
+	if ( m_bTriggerCameraImmediately )
+	{
+		GetGameEngine()->GetCameraManager()->SetCameraCut( TRUE );
+		m_bTriggerCameraImmediately = FALSE;
+		return TRUE;
+	}
+	return FALSE;
+}

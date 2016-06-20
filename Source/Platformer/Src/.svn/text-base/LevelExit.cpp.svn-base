@@ -1,0 +1,91 @@
+#include "StdAfx.h"
+#include "LevelExit.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "Level.h"
+#include "TileMap.h"
+
+CReflectInfo CLevelExitDescription::m_ref_info; 
+
+CActor*	CLevelExit::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CLevelExit>();
+}
+
+void CLevelExit::InitActor( const ActorDescription* pDesc )
+{
+	m_Description = *pDesc;
+	m_bCollected = FALSE;
+}
+
+void CLevelExit::Reset()
+{
+}
+
+void CLevelExit::TermActor()
+{
+}
+
+void CLevelExit::UpdateActor( const FLOAT fFrameTime )
+{
+	std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+	std::list<CCharacter*>::iterator it;
+	for ( it = pPlayers->begin() ; it != pPlayers->end(); it++ )
+	{
+		CCharacter* pPlayer = (*it);
+		CCollision::SAABBox Box1( GetExtents(), GetPosition() );
+		CCollision::SAABBox Box2( pPlayer->GetExtents(), pPlayer->GetPosition() );
+
+		if ( CCollision::CheckAABoxOverlap( Box1, Box2 ) )
+		{
+			m_bCollected = TRUE;
+			GetGameMain()->GotoNextLevel( GetDescription()->nLevel );
+		}
+	}
+}
+
+void CLevelExit::Render()
+{
+	if ( !m_bCollected )
+	{
+		COLOUR_RGB Clr( 1.0f, 1.0f, 0.0f );
+
+		VECTOR vCenter = GetPosition();
+		VECTOR vPt[5];
+		FLOAT fAngle = -180.0f;
+		for (INT i = 0; i < 5; i++)
+		{
+			vPt[i] = Math::GetDirectionD( fAngle ) * GetExtents().y;
+			vPt[i] += GetPosition();
+			fAngle += 360.0f / 5.0f;
+		}
+
+		CRender2d::DrawTriangle( vPt[2], vPt[0], vCenter, Clr );
+		CRender2d::DrawTriangle( vPt[0], vCenter, vPt[3], Clr );
+		CRender2d::DrawTriangle( vPt[1], vPt[4], vCenter, Clr );
+		CRender2d::DrawTriangle( vCenter, vPt[4], vPt[2], Clr );
+		CRender2d::DrawTriangle( vPt[1], vCenter, vPt[3], Clr );
+	}
+}
+
+void CLevelExit::CreateComponents() 
+{
+}
+
+void CLevelExit::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CLevelExitDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}

@@ -1,0 +1,33 @@
+
+#ifndef _INPUT_PARSER_H_
+#define _INPUT_PARSER_H_
+
+#include "Actor.h"
+class CCharacter;
+
+class CInputParser
+{
+public:
+	CInputParser();
+
+	void	Update();
+	void	SetPlayer1( CCharacter* pPlayer1 );
+	void	SetPlayer2( CCharacter* pPlayer2 );
+
+private:
+	void	ClearGamePad( CCharacter* pPlayer );
+	void	ParseGamePad( CCharacter* pPlayer, UINT uIndex );
+	void	ParseKeyboard( CCharacter* pPlayer );
+	void	ParseTestAI( CCharacter* pPlayer );
+
+	CCharacter* m_pPlayer1;
+	CCharacter* m_pPlayer2;
+
+	BOOL	m_bTestAI;
+	INT		m_nJumpCnt;
+
+};
+
+
+#endif
+

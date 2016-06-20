@@ -1,0 +1,425 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{a770903a-79a6-493e-bc7e-e874bc7a95b9}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="GameEngine">
+      <UniqueIdentifier>{56c186a4-c5e7-408b-8c2a-6d63501631b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files">
+      <UniqueIdentifier>{8a836ed8-9b3d-4a1b-98cd-bbdf7a9b2cde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Debug">
+      <UniqueIdentifier>{a3fe2773-70e7-4c84-82fb-6dacb6b1b88e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Graphics">
+      <UniqueIdentifier>{5e085fdf-0103-4c00-be32-dfef4ce820ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Input">
+      <UniqueIdentifier>{84d2005f-a7ec-4293-8a84-4a4046b2b70b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\IO">
+      <UniqueIdentifier>{c588cfd0-7493-49db-a383-1b003fd1c1a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Reflection">
+      <UniqueIdentifier>{76b86aaa-707d-47ba-b9ea-a5d194987d8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Actors">
+      <UniqueIdentifier>{b73fed39-e598-4526-a3ea-8b4d2bc8ceb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Collision">
+      <UniqueIdentifier>{11800d13-630c-42c1-9074-fda84620029c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Math">
+      <UniqueIdentifier>{aced6231-a4bd-4b3b-8173-2919251b2881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Tiles">
+      <UniqueIdentifier>{31007aaf-0aca-4d16-ab8e-bd43091acde5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Level">
+      <UniqueIdentifier>{7e757cf4-c255-4553-978e-834278ae3951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Camera">
+      <UniqueIdentifier>{d6d160be-b22a-47dd-b070-c701f5b00b2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Header Files\Sprites">
+      <UniqueIdentifier>{899cb62d-8864-4bea-bf14-fe6a741add1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files">
+      <UniqueIdentifier>{94394135-78f8-420d-9b76-a853d7ca8aad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Debug">
+      <UniqueIdentifier>{0d210f08-89b9-403b-a486-44b926c7fe36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Graphics">
+      <UniqueIdentifier>{09331036-464d-4e1c-babb-26ba1e41ca85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Input">
+      <UniqueIdentifier>{86355ceb-d5bc-4fe0-887f-6ff1aad9fa35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\IO">
+      <UniqueIdentifier>{ee522897-b11f-4f06-bc82-a7c377374db9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Reflection">
+      <UniqueIdentifier>{6b998ab2-ff69-4f01-9748-83155280c6f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Actors">
+      <UniqueIdentifier>{38818694-9e3c-432d-b60e-036af48716d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Collision">
+      <UniqueIdentifier>{e1d8a072-43d3-4f94-9dd5-2e4de8397700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Math">
+      <UniqueIdentifier>{6676c80c-ce96-4ae1-b19a-e57ba157fcaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Tiles">
+      <UniqueIdentifier>{68fe3ea1-087c-46e1-b336-02c1bbb4a20a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Level">
+      <UniqueIdentifier>{73f83426-3a4c-40e8-98c2-77e52b25ce35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Camera">
+      <UniqueIdentifier>{69139b6e-7c8e-4076-9117-044ca12a970b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEngine\Source Files\Sprites">
+      <UniqueIdentifier>{569e54c1-bddb-46c4-bbcd-2c288ad4c466}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{982081e4-5881-4941-9722-aad58e69f768}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Source Files">
+      <UniqueIdentifier>{8d6b7d9a-c3af-471e-9906-41400d376e73}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Game\Header Files">
+      <UniqueIdentifier>{623bd763-558b-47d2-963f-0f5033e99519}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileVersion.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameEngine.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameEnginePCH.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\GameSettings.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\StdAfx.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TypeDefs.h">
+      <Filter>GameEngine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugPrint.h">
+      <Filter>GameEngine\Header Files\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugTrace.h">
+      <Filter>GameEngine\Header Files\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Render2d.h">
+      <Filter>GameEngine\Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TextureManager.h">
+      <Filter>GameEngine\Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\View.h">
+      <Filter>GameEngine\Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Gamepad.h">
+      <Filter>GameEngine\Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Input.h">
+      <Filter>GameEngine\Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Keyboard.h">
+      <Filter>GameEngine\Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Mouse.h">
+      <Filter>GameEngine\Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileReader.h">
+      <Filter>GameEngine\Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\FileSerializer.h">
+      <Filter>GameEngine\Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Serializer.h">
+      <Filter>GameEngine\Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TextParser.h">
+      <Filter>GameEngine\Header Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Reflectable.h">
+      <Filter>GameEngine\Header Files\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\ReflectableEditor.h">
+      <Filter>GameEngine\Header Files\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Actor.h">
+      <Filter>GameEngine\Header Files\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DynamicActor.h">
+      <Filter>GameEngine\Header Files\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\World.h">
+      <Filter>GameEngine\Header Files\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Collision.h">
+      <Filter>GameEngine\Header Files\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\MathDefs.h">
+      <Filter>GameEngine\Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Vector2d.h">
+      <Filter>GameEngine\Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileMap.h">
+      <Filter>GameEngine\Header Files\Tiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSet.h">
+      <Filter>GameEngine\Header Files\Tiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetBitmap.h">
+      <Filter>GameEngine\Header Files\Tiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetList.h">
+      <Filter>GameEngine\Header Files\Tiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TileSetMapping.h">
+      <Filter>GameEngine\Header Files\Tiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Level.h">
+      <Filter>GameEngine\Header Files\Level</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Camera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\CameraManager.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\CoopCamera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\DebugCamera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\LookAtCamera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\PlayerCamera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\TransitionCamera.h">
+      <Filter>GameEngine\Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\Sprite.h">
+      <Filter>GameEngine\Header Files\Sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\SpriteInfo.h">
+      <Filter>GameEngine\Header Files\Sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameEngine\GameEngine\Inc\SpriteManager.h">
+      <Filter>GameEngine\Header Files\Sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\MidiController.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Fretboard.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Workspace.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Window.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Note.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Tuning.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\Piano.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\MidiControllerGuitar.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\MidiOutput.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\PianoKey.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Inc\FretNote.h">
+      <Filter>Game\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\GameEngine.cpp">
+      <Filter>GameEngine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\GameSettings.cpp">
+      <Filter>GameEngine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugPrint.cpp">
+      <Filter>GameEngine\Source Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugTrace.cpp">
+      <Filter>GameEngine\Source Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Render2d.cpp">
+      <Filter>GameEngine\Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TextureManager.cpp">
+      <Filter>GameEngine\Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\View.cpp">
+      <Filter>GameEngine\Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Gamepad.cpp">
+      <Filter>GameEngine\Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Input.cpp">
+      <Filter>GameEngine\Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Keyboard.cpp">
+      <Filter>GameEngine\Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Mouse.cpp">
+      <Filter>GameEngine\Source Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\FileReader.cpp">
+      <Filter>GameEngine\Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\FileSerializer.cpp">
+      <Filter>GameEngine\Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Serializer.cpp">
+      <Filter>GameEngine\Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TextParser.cpp">
+      <Filter>GameEngine\Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Reflectable.cpp">
+      <Filter>GameEngine\Source Files\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\ReflectableEditor.cpp">
+      <Filter>GameEngine\Source Files\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Actor.cpp">
+      <Filter>GameEngine\Source Files\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DynamicActor.cpp">
+      <Filter>GameEngine\Source Files\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\World.cpp">
+      <Filter>GameEngine\Source Files\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Collision.cpp">
+      <Filter>GameEngine\Source Files\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Vector2d.cpp">
+      <Filter>GameEngine\Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileMap.cpp">
+      <Filter>GameEngine\Source Files\Tiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSet.cpp">
+      <Filter>GameEngine\Source Files\Tiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetBitmap.cpp">
+      <Filter>GameEngine\Source Files\Tiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetList.cpp">
+      <Filter>GameEngine\Source Files\Tiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TileSetMapping.cpp">
+      <Filter>GameEngine\Source Files\Tiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Level.cpp">
+      <Filter>GameEngine\Source Files\Level</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Camera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\CameraManager.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\CoopCamera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\DebugCamera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\LookAtCamera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\PlayerCamera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\TransitionCamera.cpp">
+      <Filter>GameEngine\Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\Sprite.cpp">
+      <Filter>GameEngine\Source Files\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\SpriteInfo.cpp">
+      <Filter>GameEngine\Source Files\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameEngine\GameEngine\Src\SpriteManager.cpp">
+      <Filter>GameEngine\Source Files\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\main.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MidiController.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Fretboard.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Workspace.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Window.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Note.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Tuning.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Piano.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MidiControllerGuitar.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\MidiOutput.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PianoKey.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\FretNote.cpp">
+      <Filter>Game\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Game\Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

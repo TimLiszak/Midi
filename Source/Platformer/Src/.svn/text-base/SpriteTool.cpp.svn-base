@@ -1,0 +1,97 @@
+#include "StdAfx.h"
+#include "SpriteTool.h"
+#include "ActorGroups.h"
+#include "Input.h"
+#include "CameraManager.h"
+#include "World.h"
+#include "Render2d.h"
+#include "Level.h"
+#include "FileSerializer.h"
+#include "DebugPrint.h"
+#include "View.h"
+#include "ReflectableEditor.h"
+#include "SpriteManager.h"
+#include "Level.h"
+#include "TileMap.h"
+#include "TileSet.h"
+
+void CSpriteTool::Init()
+{
+	m_pSelectedActor = NULL;
+	GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+}
+
+void CSpriteTool::Term()
+{
+	GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+}
+
+void CSpriteTool::Update( CEditor::SMouseState* pMouseState )
+{
+	CMouse* pMouse = GetGameEngine()->GetInput()->GetMouse();
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+
+	if ( pMouse->IsMouseTriggered( EMouseButton_Left ) )
+	{
+		FindActor( vMousePos );
+	}
+
+	if ( m_pSelectedActor )
+	{
+		GetGameEngine()->GetReflectableEditor()->SetObject( &m_pSelectedActor->GetActorDescription()->SpriteInfo );
+	}
+	else
+	{
+		GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+	}
+}
+
+void CSpriteTool::Render( CEditor::SMouseState* pMouseState )
+{
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	GetGameEngine()->GetView()->PushCameraMatrix();
+	CRender2d::DrawCircleFill( vMousePos, 5.0f, COLOUR_RGB( 1.0f, 1.0f, 0.0f ) );
+
+	if ( m_pSelectedActor )
+	{
+		VECTOR vPos = m_pSelectedActor->GetPosition();
+		VECTOR vExtents = m_pSelectedActor->GetExtents();
+		CRender2d::DrawRect( vPos, vExtents, 0.0f, COLOUR_RGB( 0.7f, 0.7f, 0.0f ) );
+	}
+
+	GetGameEngine()->GetView()->PopCameraMatrix();
+}
+
+void CSpriteTool::DragDropFiles( const std::vector< std::string >& Files )
+{
+	VECTOR vMousePos = GetGameEngine()->GetView()->GetMouseWorldPosition();
+	if ( Files.size() == 1 )
+	{
+		FindActor( vMousePos );
+
+		if ( m_pSelectedActor )
+		{
+			std::string Filename = Files.front();
+			if ( GetGameEngine()->GetSpriteManager()->IsValidSpriteFile( Filename ) )
+			{
+				m_pSelectedActor->GetActorDescription()->SpriteInfo.strFilename = Filename;
+				m_pSelectedActor->ReloadSprite();
+			}
+		}
+	}
+
+}
+void CSpriteTool::FindActor( VECTOR vPos )
+{
+	std::list<CLevelObject*> Results;
+	CCollision::SAABBox Box( VECTOR(), vPos );
+	if ( GetGameEngine()->GetWorld()->GetLevel()->CheckBoxCollision( Results, Box, 0xFFFFFFFF ) )
+	{
+		m_pSelectedActor = Results.back();
+	}
+	else
+	{
+		GetGameEngine()->GetReflectableEditor()->SetObject( NULL );
+		m_pSelectedActor = NULL;
+	}
+}

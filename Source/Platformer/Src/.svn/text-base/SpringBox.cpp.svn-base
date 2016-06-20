@@ -1,0 +1,133 @@
+#include "StdAfx.h"
+#include "SpringBox.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "View.h"
+#include "Character.h"
+#include "Sprite.h"
+
+CReflectInfo CSpringBoxDescription::m_ref_info; 
+
+static const FLOAT TIME_UNTIL_RETRACT = 0.3f;
+static const FLOAT DISABLE_AIR_MOVE_TIME = 0.3f;
+
+CActor*	CSpringBox::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CSpringBox>();
+}
+
+void CSpringBox::InitActor( const ActorDescription* pDesc )
+{
+	m_fTimeUntilRetract = 0.0f;
+}
+
+void CSpringBox::UpdateActor( const FLOAT fFrameTime )
+{
+	if ( m_fTimeUntilRetract > 0.0f )
+	{
+		m_fTimeUntilRetract -= fFrameTime;
+		if ( m_fTimeUntilRetract <= 0.0f )
+		{
+			CSprite::SAnimation* pAnimSpring = m_pSprite->GetAnimation( "Spring" );
+			if ( pAnimSpring )
+			{
+				pAnimSpring->bVisible = FALSE;
+			}
+
+			CSprite::SAnimation* pAnimRetract = m_pSprite->GetAnimation( "Retract" );
+			if ( pAnimRetract )
+			{
+				pAnimRetract->bPlayAnimation = TRUE;
+				pAnimRetract->bVisible = TRUE;
+				pAnimRetract->fCurrentMoveTime = 0.0f;
+			}
+		}
+	}
+}
+
+void CSpringBox::Render()
+{
+	if( m_pSprite )
+	{
+		return;
+	}
+
+	COLOUR_RGB Clr = COLOUR_RGB( 0.5f, 0.5f, 0.5f );
+	if ( GetDescription()->ePolarity != EPolarity_Neutral )
+	{
+		Clr = GetGameMain()->GetPolarityColour( (EPolarity)GetDescription()->ePolarity );
+	}
+
+	CRender2d::DrawRectFill( GetPosition(), GetExtents(), 0.0f, Clr );
+}
+
+void CSpringBox::CreateComponents() 
+{
+}
+
+void CSpringBox::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CSpringBoxDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CSpringBox::CharacterCollision( class CCharacter* pCharacter, INT nCollideX, INT nCollideY )
+{
+	if ( pCharacter->IsDead() )
+	{
+		return;
+	}
+
+	if ( GetPolarity() == EPolarity_Neutral || GetPolarity() == pCharacter->GetPolarity() )
+	{
+		BOOL bSpring = FALSE;
+		FLOAT fForce = GetDescription()->fForce * GetDescription()->nDirection;
+		if ( GetDescription()->bHorizontal )
+		{
+			if ( -nCollideX == GetDescription()->nDirection )
+			{
+				pCharacter->AddForce( VECTOR(fForce, 0.0f) );
+				pCharacter->DisableAirMovement( DISABLE_AIR_MOVE_TIME );
+				bSpring = TRUE;
+			}
+		}
+		else
+		{
+			if ( -nCollideY == GetDescription()->nDirection )
+			{
+				pCharacter->AddForce( VECTOR(0.0f, fForce) );
+				bSpring = TRUE;
+			}
+		}
+
+		if ( bSpring )
+		{
+			CSprite::SAnimation* pAnimSpring = m_pSprite->GetAnimation( "Spring" );
+			if ( pAnimSpring )
+			{
+				
+				pAnimSpring->bPlayAnimation = TRUE;
+				pAnimSpring->bVisible = TRUE;
+				pAnimSpring->fCurrentMoveTime = 0.0f;
+				m_fTimeUntilRetract = TIME_UNTIL_RETRACT;
+			}
+			CSprite::SAnimation* pAnimRetract = m_pSprite->GetAnimation( "Retract" );
+			if ( pAnimRetract )
+			{
+				pAnimRetract->bVisible = FALSE;
+			}
+		}
+	}
+}
+

@@ -1,0 +1,47 @@
+#ifndef _TILE_TOOL_H_
+#define _TILE_TOOL_H_
+
+#include "Editor.h"
+#include "TileSelection.h"
+
+class CTileTool : public CEditorTool
+{
+public:
+	void	Init( class CTileSet* pTileSet );
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+
+	INT		GetSelectedTile();
+	void	SetSelectedTile( INT nTileId );
+
+protected:
+	virtual void	DrawTile( VECTOR vPos, VECTOR vTileOffset );
+	virtual void	ClearTile( VECTOR vPos );
+
+	CTileSet* m_pTileSet;
+	CTileSelection	TileSelection;
+    CTileSelection::EResult m_eResult;
+};
+
+class CTileCollisionTool : public CTileTool
+{
+public:
+
+protected:
+	virtual void	DrawTile( VECTOR vPos, VECTOR vTileOffset );
+	virtual void	ClearTile( VECTOR vPos );
+};
+
+inline INT CTileTool::GetSelectedTile() 
+{ 
+    return TileSelection.GetSelectedTile(); 
+}
+
+inline void CTileTool::SetSelectedTile( INT nTileId )
+{
+	TileSelection.SetSelectedTile( nTileId );
+}
+
+#endif

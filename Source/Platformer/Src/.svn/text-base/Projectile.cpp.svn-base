@@ -1,0 +1,81 @@
+#include "StdAfx.h"
+#include "Projectile.h"
+#include "Render2d.h"
+#include "LinearMovement.h"
+#include "ActorGroups.h"
+#include "World.h"
+#include "Character.h"
+
+CActor*	CProjectile::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CProjectile>();
+}
+
+void CProjectile::InitActor( const CActorDescription* pDesc )
+{
+	m_fLifeTime = -1.0f;
+	m_ePolarity = EPolarity_Red;
+}
+
+void CProjectile::UpdateActor( const FLOAT fFrameTime )
+{
+	if ( m_fLifeTime > 0.0f )
+	{
+		m_fLifeTime -= fFrameTime;
+		m_fLifeTime = Math::Max( m_fLifeTime, 0.0f );
+	}
+}
+
+void CProjectile::CreateComponents()
+{
+	m_pMovement = new CLinearMovement( this );
+	m_vecComponents.push_back( m_pMovement );
+}
+
+void CProjectile::SetVelocity( VECTOR vVel )
+{
+	m_pMovement->SetVelocity( vVel );
+}
+
+void CProjectile::Render()
+{
+	COLOUR_RGB Clr;
+	switch( m_ePolarity )
+	{
+		case EPolarity_Red:
+		{
+			Clr = COLOUR_RGB( 1.0f, 0.0f, 0.0f );
+		}
+		break;
+
+		case EPolarity_Blue:
+		{
+			Clr = COLOUR_RGB( 0.0f, 0.5f, 1.0f );
+		}
+		break;
+
+		default:
+			ASSERT( FALSE );
+	}
+	
+	CRender2d::DrawCircleFill( m_vPosition, m_vExtents.x, Clr );
+}
+
+BOOL CProjectile::CanRemove()
+{
+	return ( m_fLifeTime == 0.0f );
+}
+
+void CProjectile::UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget )
+{
+	FLOAT fT = 1.0f;
+	UINT uGroupsMask = 1 << EActorGroup_Character;
+	CActor* pResult = NULL;
+	if ( GetGameEngine()->GetWorld()->CheckLineCollision( pResult, vCurrentPos, vTarget, uGroupsMask, fT ) )
+	{
+		m_fLifeTime = 0.0f;
+		((CCharacter*)pResult)->CollideWithProjectile( this );
+	}
+
+	SetPosition( vTarget );
+}

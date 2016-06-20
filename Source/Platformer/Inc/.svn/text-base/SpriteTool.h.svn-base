@@ -1,0 +1,23 @@
+#ifndef _SPRITE_TOOL_H_
+#define _SPRITE_TOOL_H_
+
+#include "Editor.h"
+
+class CSpriteTool : public CEditorTool
+{
+public:
+	void	Init();
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+	virtual void	DragDropFiles( const std::vector< std::string >& Files );
+
+protected:
+	void	FindActor( VECTOR vPos );
+
+	void	UpdateObjectProperties();
+	class CLevelObject*	m_pSelectedActor;
+};
+
+#endif

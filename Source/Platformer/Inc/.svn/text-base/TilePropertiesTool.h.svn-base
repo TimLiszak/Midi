@@ -1,0 +1,41 @@
+#ifndef _TILE_PROPERTIES_TOOL_H_
+#define _TILE_PROPERTIES_TOOL_H_
+
+#include "Editor.h"
+#include "TileSelection.h"
+class CTileSetMapping;
+
+class CTilePropertiesTool : public CEditorTool
+{
+public:
+	void	Init( class CTileSet* pTileSet );
+	void	Term();
+
+	virtual void	Update( CEditor::SMouseState* pMouseState );
+	virtual void	Render( CEditor::SMouseState* pMouseState );
+
+	INT		GetSelectedTile();
+	void	SetSelectedTile( INT nTileId );
+
+protected:
+	CTileSetMapping* m_pTileSet;
+	CTileSet* m_pMasterTileSet;
+	
+	CTileSelection	TileSelection;
+	CTileSelection	MasterTileSelection;
+	CTileSelection* m_pLastSelection;
+
+	INT		m_nDragTile;
+};
+
+inline INT CTilePropertiesTool::GetSelectedTile() 
+{ 
+    return TileSelection.GetSelectedTile(); 
+}
+
+inline void CTilePropertiesTool::SetSelectedTile( INT nTileId )
+{
+	TileSelection.SetSelectedTile( nTileId );
+}
+
+#endif

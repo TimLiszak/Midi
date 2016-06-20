@@ -1,0 +1,67 @@
+#include "StdAfx.h"
+#include "JumpMovement.h"
+#include "Character.h"
+#include "Input.h"
+#include "CharacterPhysics.h"
+#include "GameMain.h"
+
+static const FLOAT	JUMP_VELOCITY = 10.5f * 60.0f;
+static const FLOAT	WALL_JUMP_VELOCITY = 12.0f * 60.0f;
+
+
+static const FLOAT	FALL_EDGE_BUFFER_TIME = 0.1f;
+static const FLOAT	HIT_GROUND_BUFFER_TIME = 0.1f;
+
+void CJumpMovement::Init()
+{
+	m_fJumpTriggeredTime = 0.0f;
+	m_bDBInfiniteJump = FALSE;
+}
+
+void CJumpMovement::Update( const FLOAT fFrameTime )
+{
+	CCharacter* pChar = (CCharacter*)m_pActor;
+	if ( pChar->IsDead() ) 
+	{
+		return;
+	}
+
+	CCharacterInput* pInput = pChar->GetCharacterInput();
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+    INT nDownDir = pChar->GetDownDirection();
+
+	if ( pKey->IsKeyTriggered( EKbKey_P ) )
+	{
+		m_bDBInfiniteJump = !m_bDBInfiniteJump;
+	}
+
+	if ( pInput->JumpTriggered() )
+	{
+		m_fJumpTriggeredTime = GetGameEngine()->GetTotalTime();
+	}
+
+	if ( ( pChar->GetCharacterState()->IsOnGround( FALL_EDGE_BUFFER_TIME ) || m_bDBInfiniteJump )
+			&& m_fJumpTriggeredTime > 0 )
+	{
+		FLOAT fCurrTime = GetGameEngine()->GetTotalTime();
+		if ( fCurrTime - m_fJumpTriggeredTime < HIT_GROUND_BUFFER_TIME )
+		{
+			pChar->GetPhysics()->Jump( -nDownDir * JUMP_VELOCITY );
+			pChar->GetCharacterState()->SetInAir();
+			m_fJumpTriggeredTime = 0.0f;
+		}
+	}
+		
+	if ( pInput->JumpReleased() )
+	{
+		FLOAT fVel = pChar->GetPhysics()->GetVelocityY();
+		if ( nDownDir * fVel < 0 )
+		{
+			pChar->GetPhysics()->StopJump( 0.5f );
+		}
+	}
+}
+
+void CJumpMovement::Term()
+{
+}

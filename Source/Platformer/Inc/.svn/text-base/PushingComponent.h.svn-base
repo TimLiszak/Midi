@@ -1,0 +1,22 @@
+
+#ifndef _PUSHING_COMPONENT_H_
+#define _PUSHING_COMPONENT_H_
+
+#include "Actor.h"
+
+class CPushingComponent : public CActorComponent
+{
+public:
+	CPushingComponent( class CActor* pActor ) : CActorComponent(pActor) {}
+	virtual ~CPushingComponent() {}
+
+	virtual void	Init();
+	virtual void	Update( const FLOAT fFrameTime );
+	virtual void	Term();
+
+protected:
+};
+
+
+#endif
+

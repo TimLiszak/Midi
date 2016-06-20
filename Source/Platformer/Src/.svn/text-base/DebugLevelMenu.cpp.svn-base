@@ -1,0 +1,120 @@
+#include "StdAfx.h"
+#include "DebugLevelMenu.h"
+#include "DebugPrint.h"
+#include "Input.h"
+#include "GameMain.h"
+
+void CDebugLevelMenu::FindLevels()
+{
+	m_LevelFiles.clear();
+
+	WIN32_FIND_DATA FindData;
+	HANDLE hFile = FindFirstFile( ".\\Data\\*.lvl", &FindData );
+	if ( hFile != INVALID_HANDLE_VALUE )
+	{
+		BOOL bFound = TRUE;
+		do
+		{
+			m_LevelFiles.push_back( FindData.cFileName );
+			bFound = FindNextFile( hFile, &FindData );
+		}
+		while( bFound );
+	}
+	FindClose( hFile );
+
+
+	hFile = FindFirstFile( ".\\Data\\*.clvl", &FindData );
+	if ( hFile != INVALID_HANDLE_VALUE )
+	{
+		BOOL bFound = TRUE;
+		do
+		{
+			m_CoopLevelFiles.push_back( FindData.cFileName );
+			bFound = FindNextFile( hFile, &FindData );
+		}
+		while( bFound );
+	}
+	FindClose( hFile );
+}
+
+void CDebugLevelMenu::Init()
+{
+	FindLevels();
+
+	m_nSelected = 0;
+
+	std::list<std::string>::iterator it;
+	for ( it = m_LevelFiles.begin() ; it != m_LevelFiles.end(); it++ )
+	{
+		std::string Name = (*it);
+		Name = Name.substr( 0, Name.find( ".lvl" ) );
+		m_Menu.push_back( SGameMode( Name, (*it), FALSE ) );
+	}
+	for ( it = m_CoopLevelFiles.begin() ; it != m_CoopLevelFiles.end(); it++ )
+	{
+		std::string Name = (*it);
+		Name = Name.substr( 0, Name.find( ".clvl" ) );
+		Name += " (Co-op)";
+		m_Menu.push_back( SGameMode( Name, (*it), TRUE ) );
+	}
+}
+
+void CDebugLevelMenu::Update( const FLOAT fFrameTime )
+{
+	COLOUR_RGB ClrNormal( 0.0f, 0.0f, 0.0f );
+	COLOUR_RGB ClrSelected( 0.6f, 0.6f, 0.0f );
+	GetGameEngine()->GetDebugPrint()->ChangeColour( ClrNormal );
+	
+	for (INT i = 0; i < (INT)m_Menu.size(); i++)
+	{
+		if ( i == m_nSelected )
+		{
+			GetGameEngine()->GetDebugPrint()->ChangeColour( ClrSelected );
+		}
+		GetGameEngine()->GetDebugPrint()->Printf( m_Menu[i].strDisplayName.c_str() );
+		if ( i == m_nSelected )
+		{
+			GetGameEngine()->GetDebugPrint()->ChangeColour( ClrNormal );
+		}
+	}
+
+	CGamepad* pGamepad = GetGameEngine()->GetInput()->GetGamepad(0);
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_DOWN ) || pGamepad->IsKeyTriggered( EPad_DPadDown ) )
+	{
+		m_nSelected++;
+		if ( m_nSelected >= (INT)m_Menu.size() )
+		{
+			m_nSelected = 0;
+		}
+	}
+	else if ( pKey->IsKeyTriggered( EKbKey_UP ) || pGamepad->IsKeyTriggered( EPad_DPadUp ) )
+	{
+		m_nSelected--;
+		if ( m_nSelected < 0 )
+		{
+			m_nSelected = m_Menu.size() - 1;
+		}
+	}
+	else if ( pKey->IsKeyTriggered( EKbKey_RETURN ) || pGamepad->IsKeyTriggered( EPad_Start ) )
+	{
+		std::string strFilename = m_Menu[m_nSelected].strLevel;
+		BOOL bCoop = m_Menu[m_nSelected].bCoop;
+		if ( pKey->IsKeyDown( EKbKey_SHIFT ) )
+		{
+			bCoop = TRUE;
+		}
+		CGameMain* pGameMode = new CGameMain( strFilename.c_str(), bCoop );
+		GetGameEngine()->SwitchGameMode( pGameMode );
+	}
+
+}
+
+void CDebugLevelMenu::Term()
+{
+	m_Menu.clear();
+}
+
+void CDebugLevelMenu::Render()
+{
+}

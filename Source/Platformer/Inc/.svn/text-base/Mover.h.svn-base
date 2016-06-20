@@ -1,0 +1,113 @@
+#ifndef _MOVER_H_
+#define _MOVER_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class CMoverDescription : public COutputterDescription
+{
+public:
+	CMoverDescription() : COutputterDescription(), 
+		fMoveAngle( 90.0f ),
+		fMoveDistance( 200.0f ),
+		fMoveTime( 1.0f ),
+        fStartTime( 0.0f ),
+		bBounce( TRUE ),
+		bLoop( TRUE ),
+		bSwitchDirection( FALSE )
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		vSelectionPosition.Set( 0.0f, 0.0f );
+		vSelectionExtents.Set( 50.0f, 50.0f );
+	}
+	REFLECTION_INFO;
+
+	FLOAT	fMoveAngle;
+	FLOAT	fMoveDistance;
+	FLOAT	fMoveTime;
+    FLOAT   fStartTime;
+	BOOL	bBounce;
+	BOOL	bLoop;
+	BOOL	bSwitchDirection;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+
+		Serializer->Serialize( fMoveAngle );
+		Serializer->Serialize( fMoveDistance );
+		Serializer->Serialize( fMoveTime );
+		Serializer->Serialize( bBounce );
+		Serializer->Serialize( bLoop );
+		Serializer->Serialize( bSwitchDirection );
+
+        if ( Serializer->GetVersion() >= EFileVersion_MoverStartTime )
+        {
+		    Serializer->Serialize( fStartTime );
+        }
+	}
+};
+
+inline void CMoverDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+	REGISTER( REF_FLOAT, fMoveAngle );
+	REGISTER_LIMIT( REF_FLOAT, fMoveDistance, 0.0f, 9999.0f );
+	REGISTER_ALL( REF_FLOAT, fMoveTime, 0.0f, 9999.0f, 0.05f );
+	REGISTER_ALL( REF_FLOAT, fStartTime, 0.0f, 9999.0f, 0.05f );
+	REGISTER_LIMIT( REF_UINT, bBounce, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bLoop, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bSwitchDirection, 0, 1 );
+}
+
+class CMover : public COutputter
+{
+public:
+	typedef CMoverDescription ActorDescription;
+
+	virtual BOOL VisibleInEditorOnly() { return TRUE; }
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Mover; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual void	UpdateEditorSelection();
+	virtual void	RenderEditorSelection();
+
+protected:
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	FLOAT	m_fCurrentDistance;
+	FLOAT	m_fDirection;
+    FLOAT   m_fCurrentSpeed;
+    BOOL    m_bDecelerate;
+
+
+private:
+	CMoverDescription* GetDescription() { return (CMoverDescription*)m_pDescription; }
+
+};
+
+inline BOOL CMover::CanSelectActor( CActor* pActor )
+{
+	return pActor->IsMovable();
+}
+
+#endif

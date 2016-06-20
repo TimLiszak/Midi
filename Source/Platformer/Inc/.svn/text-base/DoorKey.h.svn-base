@@ -1,0 +1,120 @@
+#ifndef _DOOR_KEY_H_
+#define _DOOR_KEY_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "PlayerCamera.h"
+#include "GameMain.h"
+#include "Outputter.h"
+
+class CDoorKeyDescription : public COutputterDescription
+{
+public:
+	CDoorKeyDescription() : COutputterDescription()
+	{
+		uGroup = EActorGroup_NoCollision;
+		vExtents.Set( 10.0f, 10.0f );
+		vDoorMin.Set( -1.0f, -1.0f );
+		vDoorMax.Set( -1.0f, -1.0f );
+		fDelay = 1.0f;
+		bOpen = TRUE;
+		bPermanent = TRUE;
+		bDisableInput = FALSE;
+	}
+	REFLECTION_INFO;
+
+	VECTOR	vDoorMin;
+	VECTOR	vDoorMax;
+	FLOAT	fDelay;
+	BOOL	bOpen;
+	BOOL	bPermanent;
+	BOOL	bDisableInput;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		COutputterDescription::Serialize( Serializer );
+
+		Serializer->Serialize( vDoorMin );
+		Serializer->Serialize( vDoorMax );
+		Serializer->Serialize( fDelay );
+		Serializer->Serialize( bOpen );
+		Serializer->Serialize( bPermanent );
+
+		if ( Serializer->GetVersion() >= EFileVersion_DoorKeyFix )
+		{
+			Serializer->Serialize( bDisableInput );
+		}
+		else
+		{
+			bDisableInput = TRUE;
+		}
+	}
+};
+
+inline void CDoorKeyDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	COutputterDescription::RegisterMembers( p_info );
+
+	REGISTER_INC( REF_VECTOR, vSelectionPosition, 3.0f );
+	REGISTER_ALL( REF_VECTOR, vSelectionExtents, 4.0f, 99999.0f, 3.0f );
+
+	REGISTER( REF_INTVECTOR, vDoorMin );
+	REGISTER( REF_INTVECTOR, vDoorMax );
+	REGISTER_ALL( REF_FLOAT, fDelay, 0.0f, 99.0f, 0.005f );
+	REGISTER_LIMIT( REF_UINT, bOpen, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bPermanent, 0, 1 );
+	REGISTER_LIMIT( REF_UINT, bDisableInput, 0, 1 );
+}
+
+class CDoorKey : public COutputter
+{
+public:
+	typedef CDoorKeyDescription ActorDescription;
+
+	virtual void	Reset();
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_DoorKey; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	void	OpenDoor();
+
+	virtual BOOL	CanSelectActor( CActor* pActor );
+
+	virtual void	ShiftByTile( INT nX, INT nY );
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+	virtual void	TermActor();
+
+	void TriggerActors( BOOL bEnable );
+
+	enum EDoorState
+	{
+		EDoorState_Closed,
+		EDoorState_Delay,
+		EDoorState_Opening,
+		EDoorState_Open,
+
+		EDoorState_Max
+	};
+	EDoorState	m_eDoorState;
+	FLOAT		m_fStateTimer;
+	INT			m_nCurrentTileX;
+
+private:
+	CDoorKeyDescription* GetDescription() { return (CDoorKeyDescription*)m_pDescription; }
+
+};
+
+inline BOOL CDoorKey::CanSelectActor( CActor* pActor )
+{
+	return TRUE; //((CLevelObject*)pActor)->GetObjectId() == ELevelObjectType_CameraObject;
+}
+
+#endif

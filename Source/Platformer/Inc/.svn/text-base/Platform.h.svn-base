@@ -1,0 +1,93 @@
+#ifndef _PLATFORM_H_
+#define _PLATFORM_H_
+
+#include "Level.h"
+#include "LevelObjectTypes.h"
+#include "ActorGroups.h"
+#include "GameMain.h"
+#include "PolarLevelObject.h"
+
+enum EPlatformShape
+{
+	EPlatformShape_Box,
+	EPlatformShape_Circle,
+
+	EPlatformShape_Max
+};
+
+class CPlatformDescription : public CActorDescription
+{
+public:
+	CPlatformDescription() : CActorDescription(), 
+		ePolarity( EPolarity_Neutral ),
+		uShape( 0 ),
+		fColourR( 0.5f ),
+		fColourG( 0.5f ),
+		fColourB( 0.5f )
+	{
+		uGroup = EActorGroup_Obstacle;
+		vExtents.Set( 50.0f, 10.0f );
+	}
+	REFLECTION_INFO;
+
+	UINT	ePolarity;
+	UINT	uShape;
+	FLOAT	fColourR;
+	FLOAT	fColourG;
+	FLOAT	fColourB;
+
+	virtual void Serialize( CSerializer* Serializer ) 
+	{
+		CActorDescription::Serialize( Serializer );
+
+		Serializer->Serialize( ePolarity );
+		Serializer->Serialize( uShape );
+		Serializer->Serialize( fColourR );
+		Serializer->Serialize( fColourG );
+		Serializer->Serialize( fColourB );
+	}
+
+};
+
+inline void CPlatformDescription::RegisterMembers(CReflectInfo* p_info)
+{
+	CActorDescription::RegisterMembers( p_info );
+
+	REGISTER_LIMIT( REF_UINT, ePolarity, 0, 2 );
+	REGISTER_LIMIT( REF_UINT, uShape, 0, 1 );
+	REGISTER_ALL( REF_FLOAT, fColourR, 0.0f, 1.0f, 0.005f );
+	REGISTER_ALL( REF_FLOAT, fColourG, 0.0f, 1.0f, 0.005f );
+	REGISTER_ALL( REF_FLOAT, fColourB, 0.0f, 1.0f, 0.005f );
+}
+
+class CPlatform : public CPolarLevelObject
+{
+public:
+
+	typedef CPlatformDescription ActorDescription;
+	
+	virtual inline BOOL	IsMovable() { return TRUE; }
+
+	virtual CActor*	GetNewInstance();
+	virtual UINT	GetObjectId() { return ELevelObjectType_Platform; }
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual void	Serialize( CSerializer* Serializer );
+
+	virtual EPolarity	GetPolarity();
+
+protected:
+	virtual void	CreateComponents();
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	Render();
+
+private:
+	CPlatformDescription* GetDescription() { return (CPlatformDescription*)m_pDescription; }
+};
+
+inline EPolarity CPlatform::GetPolarity()
+{
+	return (EPolarity)GetDescription()->ePolarity;
+}
+
+#endif

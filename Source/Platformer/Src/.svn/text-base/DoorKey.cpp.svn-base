@@ -1,0 +1,210 @@
+#include "StdAfx.h"
+#include "DoorKey.h"
+#include "Render2d.h"
+#include "GameMain.h"
+#include "World.h"
+#include "Input.h"
+#include "Character.h"
+#include "Level.h"
+#include "TileMap.h"
+
+CReflectInfo CDoorKeyDescription::m_ref_info; 
+
+static const FLOAT	OPEN_TILE_TIME	= 0.15f;
+
+CActor*	CDoorKey::GetNewInstance()
+{
+	return GetGameEngine()->GetWorld()->SpawnActorNoInit<CDoorKey>();
+}
+
+void CDoorKey::InitActor( const ActorDescription* pDesc )
+{
+	m_eDoorState = EDoorState_Closed;
+	m_fStateTimer = 0.0f;
+
+	if ( !pDesc->bOpen )
+	{
+		GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->OpenDoor( GetDescription()->vDoorMin, GetDescription()->vDoorMax );
+	}
+}
+
+void CDoorKey::Reset()
+{
+	if ( !GetDescription()->bPermanent )
+	{
+		m_eDoorState = EDoorState_Closed;
+		m_fStateTimer = 0.0f;
+
+		if ( !GetDescription()->bOpen )
+		{
+			GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->OpenDoor( GetDescription()->vDoorMin, GetDescription()->vDoorMax );
+		}
+		else
+		{
+			GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->CloseDoor( GetDescription()->vDoorMin, GetDescription()->vDoorMax );
+		}
+	}
+		
+}
+
+void CDoorKey::TermActor()
+{
+}
+
+void CDoorKey::UpdateActor( const FLOAT fFrameTime )
+{
+	FindActors( GetDescription() );
+
+	m_fStateTimer += fFrameTime;
+
+	switch( m_eDoorState )
+	{
+		case EDoorState_Closed:
+		{
+			std::list<CCharacter*>* pPlayers = GetGameMain()->GetPlayers();
+			std::list<CCharacter*>::iterator it;
+			for ( it = pPlayers->begin() ; it != pPlayers->end(); it++ )
+			{
+				CCharacter* pPlayer = (*it);
+				CCollision::SAABBox Box1( GetExtents(), GetPosition() );
+				CCollision::SAABBox Box2( pPlayer->GetExtents(), pPlayer->GetPosition() );
+
+				if ( CCollision::CheckAABoxOverlap( Box1, Box2 ) )
+				{
+					TriggerActors( TRUE );
+
+					if ( GetDescription()->bOpen && GetDescription()->bDisableInput )
+					{
+						GetGameEngine()->GetInput()->DisableInput( TRUE );
+					}
+					m_eDoorState = EDoorState_Delay;
+					m_fStateTimer = 0.0f;
+					break;
+				}
+				else
+				{
+					TriggerActors( FALSE );
+				}
+			}
+		}
+		break;
+
+		case EDoorState_Delay:
+		{
+			if ( m_fStateTimer > GetDescription()->fDelay )
+			{
+				m_eDoorState = EDoorState_Opening;
+				m_fStateTimer = OPEN_TILE_TIME;
+				m_nCurrentTileX = (INT)GetDescription()->vDoorMin.x;
+			}
+		}
+		break;
+
+		case EDoorState_Opening:
+		{
+			if ( m_fStateTimer >= OPEN_TILE_TIME )
+			{
+				VECTOR vMin = GetDescription()->vDoorMin;
+				VECTOR vMax = GetDescription()->vDoorMax;
+				vMin.x = (FLOAT)m_nCurrentTileX;
+				vMax.x = (FLOAT)m_nCurrentTileX;
+
+				if ( GetDescription()->bOpen )
+				{
+					GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->OpenDoor( vMin, vMax );
+				}
+				else
+				{
+					GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->CloseDoor( vMin, vMax );
+				}
+
+				m_nCurrentTileX++;
+				if ( m_nCurrentTileX > (INT)GetDescription()->vDoorMax.x )
+				{
+					m_eDoorState = EDoorState_Open;
+				}
+				m_fStateTimer = 0.0f;
+			}
+		}
+		break;
+
+		case EDoorState_Open:
+		{
+		}
+		break;
+
+		default:
+			ASSERT( FALSE );
+	}
+}
+
+void CDoorKey::TriggerActors( BOOL bEnable )
+{
+	std::list<SActorInfo>::iterator it;
+	for ( it = m_OutputActors.begin() ; it != m_OutputActors.end(); it++ )
+	{
+		SActorInfo& sInfo = (*it);
+		sInfo.pActor->SetEnabled( bEnable );
+
+		if ( sInfo.pActor->GetObjectId() == ELevelObjectType_CameraObject )
+		{
+			sInfo.pActor->SetEnabled( FALSE );
+		}
+	}
+}
+
+void CDoorKey::Render()
+{
+	if ( m_eDoorState == EDoorState_Closed && GetDescription()->bOpen )
+	{
+		COLOUR_RGB Clr = COLOUR_RGB(0.7f,0.7f,0.7f);
+		VECTOR vPos1 = m_vPosition;
+		VECTOR vPos2 = m_vPosition;
+		VECTOR vPos3 = m_vPosition;
+		vPos1.y -= 5.0f;
+		vPos2.y += 5.0f;
+		vPos3.x -= 2.0f;
+		vPos3.y += 10.0f;
+
+		VECTOR vExt1( 2.0f, 7.0f );
+		VECTOR vExt2( 2.0f, 2.0f );
+
+		CRender2d::DrawCircleFill( vPos1, 5.0f, Clr );
+		CRender2d::DrawRectFill( vPos2, vExt1, 0.0f, Clr );
+		CRender2d::DrawRectFill( vPos3, vExt2, 0.0f, Clr );
+	}
+}
+
+void CDoorKey::CreateComponents() 
+{
+}
+
+void CDoorKey::Serialize( CSerializer* Serializer )
+{
+	if ( Serializer->IsReading() )
+	{
+		m_pDescription = new CDoorKeyDescription();
+	}
+
+	GetDescription()->Serialize( Serializer );
+
+	if ( Serializer->IsReading() )
+	{
+		InitActor( GetDescription() );
+	}
+}
+
+void CDoorKey::OpenDoor()
+{
+	GetGameEngine()->GetWorld()->GetLevel()->GetTileMap()->OpenDoor( GetDescription()->vDoorMin, GetDescription()->vDoorMax );
+	m_eDoorState = EDoorState_Open;
+	m_fStateTimer = 0.0f;
+}
+
+void CDoorKey::ShiftByTile( INT nX, INT nY )
+{
+	GetDescription()->vDoorMin.x += nX;
+	GetDescription()->vDoorMax.x += nX;
+	GetDescription()->vDoorMin.y += nY;
+	GetDescription()->vDoorMax.y += nY;
+}

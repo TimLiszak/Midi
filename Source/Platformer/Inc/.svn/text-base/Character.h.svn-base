@@ -1,0 +1,183 @@
+
+#ifndef _CHARACTER_H_
+#define _CHARACTER_H_
+
+#include "DynamicActor.h"
+#include "GameMain.h"
+#include "CharacterInput.h"
+#include "ActorGroups.h"
+#include "TextureManager.h"
+#include "CharacterState.h"
+
+class CCharacterPhysics;
+class CJumpMovement;
+class CInputMovement;
+class CCharacterState;
+class CWallSlideMovement;
+
+class CCharacterDescription : public CActorDescription
+{
+public:
+	CCharacterDescription() : CActorDescription(),
+		nCharacterId(0)
+	{
+		uGroup = EActorGroup_Character;
+		vExtents.Set( 15.0f, 20.0f );
+	}
+
+	INT nCharacterId;
+};
+
+class CCharacter : public CDynamicActor
+{
+public:
+	typedef CCharacterDescription ActorDescription;
+
+	void	InitActor( const ActorDescription* pDesc );
+	virtual CActor*	GetNewInstance();
+
+	virtual ~CCharacter() {}
+
+	void	Reset( VECTOR vPos, EPolarity ePolarity );
+	virtual void Render();
+
+	CCharacterPhysics*	GetPhysics();
+	CJumpMovement*		GetJumpMovement();
+	CCharacterInput*	GetCharacterInput();
+	CCharacterState*	GetCharacterState();
+	CInputMovement*		GetInputMovement();
+	CWallSlideMovement*	GetWallSlideMovement();
+
+	void	SetSpawnOffset( VECTOR vOffset );
+
+	virtual BOOL	IsDead();
+	FLOAT	GetHealth();
+	void	SwitchPolarity();
+	void	SetPolarity( EPolarity ePolarity );
+
+	EPolarity	GetPolarity();
+	INT		GetCharacterId();
+
+	void	TakeHit( EPolarity ePolarity );
+	void	CollideWithProjectile( class CProjectile* pProjectile );
+	void	AddForce( VECTOR vForce );
+	void	DisableAirMovement( FLOAT fTime );
+
+	void	CheckCollisionActor( CCollision::SweepResult& sResult, VECTOR& vPos );
+
+	void	SetGodMode( BOOL bEnable );
+
+	virtual BOOL CheckSweepCollision( CCollision::SweepResult& sResult, VECTOR vExtents, VECTOR vP1, VECTOR vP2 );
+	virtual BOOL CheckBoxCollision( CCollision::SAABBox& Box );
+	virtual BOOL CheckLineCollision( VECTOR vStart, VECTOR vEnd, FLOAT& fT );
+
+	void			AttachToActor( CDynamicActor* pActor );
+	CDynamicActor*	GetAttachedActor();
+
+    void    AddGravityModifier( class CGravityModifier* pModifier );
+    CGravityModifier*    GetGravityModifier();
+    INT     GetDownDirection();
+
+    virtual void	LevelObjectDeleted( class CLevelObject* pObject );
+
+protected:
+	virtual void	UpdateActor( const FLOAT fFrameTime );
+	virtual void	CreateComponents();
+	virtual void	UpdateMovement( VECTOR vCurrentPos, VECTOR vTarget );
+
+	void	DecreaseHealth( FLOAT fAmount );
+
+	CCharacterPhysics*	m_pCharacterPhysics;
+	CJumpMovement*		m_pJumpMovement;
+	CInputMovement*		m_pInputMovement;
+	CCharacterState*	m_pCharacterState;
+	CWallSlideMovement*	m_pWallSlideMovement;
+	
+	CTexture*	m_pTexRed;
+	CTexture*	m_pTexBlue;
+
+	FLOAT		m_fHealth;
+	EPolarity	m_ePolarity;
+
+	VECTOR		m_vSpawnOffset;
+	BOOL		m_bDBGodMode;
+	INT			m_nCharacterId;
+
+	CDynamicActor* m_pAttachToActor;
+    class CGravityModifier* m_pGravityModifier;
+
+	CCharacterInput	m_Input;
+};
+
+inline CCharacterInput* CCharacter::GetCharacterInput()
+{
+	return &m_Input;
+}
+
+inline CCharacterState* CCharacter::GetCharacterState()
+{
+	return m_pCharacterState;
+}
+
+inline CCharacterPhysics* CCharacter::GetPhysics()
+{
+	return m_pCharacterPhysics;
+}
+
+inline CJumpMovement* CCharacter::GetJumpMovement()
+{
+	return m_pJumpMovement;
+}
+
+inline CInputMovement* CCharacter::GetInputMovement()
+{
+	return m_pInputMovement;
+}
+
+inline CWallSlideMovement* CCharacter::GetWallSlideMovement()
+{
+	return m_pWallSlideMovement;
+}
+
+inline FLOAT CCharacter::GetHealth()
+{
+	return m_fHealth;
+}
+
+inline BOOL CCharacter::IsDead()
+{
+	return m_fHealth == 0.0f;
+}
+
+inline EPolarity CCharacter::GetPolarity()
+{
+	return m_ePolarity;
+}
+
+inline void	CCharacter::SetSpawnOffset( VECTOR vOffset )
+{
+	m_vSpawnOffset = vOffset;
+}
+
+inline void CCharacter::SetGodMode( BOOL bEnable )
+{
+	m_bDBGodMode = bEnable;
+}
+
+inline INT CCharacter::GetCharacterId()
+{
+	return m_nCharacterId;
+}
+
+inline void CCharacter::AttachToActor( CDynamicActor* pActor )
+{
+	m_pAttachToActor = pActor;
+}
+
+inline CDynamicActor* CCharacter::GetAttachedActor()
+{
+	return m_pAttachToActor;
+}
+
+#endif
+

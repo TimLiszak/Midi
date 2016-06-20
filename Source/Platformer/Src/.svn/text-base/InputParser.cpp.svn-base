@@ -1,0 +1,182 @@
+#include "StdAfx.h"
+#include "InputParser.h"
+#include "Character.h"
+#include "Input.h"
+
+CInputParser::CInputParser() :
+	m_pPlayer1( NULL ),
+	m_pPlayer2( NULL ),
+	m_bTestAI( FALSE ),
+	m_nJumpCnt( 0 )
+{
+}
+
+void CInputParser::Update()
+{
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyTriggered( EKbKey_Q ) )
+	{
+		m_bTestAI = !m_bTestAI;
+	}
+
+	ClearGamePad( m_pPlayer1 );
+	ClearGamePad( m_pPlayer2 );
+
+	if ( GetGameEngine()->GetInput()->IsInputDisabled() )
+	{
+		return;
+	}
+
+	if ( m_pPlayer2 )
+	{
+		ParseGamePad( m_pPlayer1, 0 );
+
+		if ( m_bTestAI )
+		{
+			if ( m_pPlayer1->IsDead() )
+			{
+				m_pPlayer2->SetGodMode( FALSE );
+				ParseGamePad( m_pPlayer2, 0 );
+			}
+			else
+			{
+				m_pPlayer2->SetGodMode( TRUE );
+				ParseTestAI( m_pPlayer2 );
+			}
+		}
+		else
+		{
+			ParseGamePad( m_pPlayer2, 1 );
+			ParseKeyboard( m_pPlayer2 );
+		}
+	}
+	else
+	{
+		ParseGamePad( m_pPlayer1, 0 );
+		ParseKeyboard( m_pPlayer1 );
+	}
+}
+
+void CInputParser::ClearGamePad( CCharacter* pPlayer )
+{
+	if ( pPlayer == NULL ) return;
+
+	CCharacterInput* pInput = pPlayer->GetCharacterInput();
+	pInput->m_fRunDirection = 0.0f;
+	pInput->m_bSwitchPolarity = FALSE;
+	pInput->m_bJumpTriggered = FALSE;
+	pInput->m_bJumpReleased = FALSE;
+}
+
+void CInputParser::ParseGamePad( CCharacter* pPlayer, UINT uIndex )
+{
+	if ( pPlayer == NULL ) return;
+
+	CCharacterInput* pInput = pPlayer->GetCharacterInput();
+	CGamepad* pGamepad = GetGameEngine()->GetInput()->GetGamepad( uIndex );
+	if ( pGamepad->IsStickHeld( EStick_Left ) )
+	{
+		pInput->m_fRunDirection = pGamepad->GetStickX( EStick_Left );
+	}
+	else if ( pGamepad->IsKeyDown( EPad_DPadRight ) )
+	{
+		pInput->m_fRunDirection = 1.0f;
+	}
+	else if ( pGamepad->IsKeyDown( EPad_DPadLeft ) )
+	{
+		pInput->m_fRunDirection = -1.0f;
+	}
+
+	if ( pGamepad->IsKeyTriggered( EPad_LeftShoulder1 ) ||
+		 pGamepad->IsKeyTriggered( EPad_LeftShoulder2 ) ||
+		 pGamepad->IsKeyTriggered( EPad_RightShoulder1 ) ||
+		 pGamepad->IsKeyTriggered( EPad_RightShoulder2 ) )
+	{
+		pInput->m_bSwitchPolarity = TRUE;
+	}
+
+	if ( pGamepad->IsKeyTriggered( EPad_FaceBottom ) ||
+		 pGamepad->IsKeyTriggered( EPad_FaceLeft ) )
+	{
+		pInput->m_bJumpTriggered = TRUE;
+	}
+
+	if ( pGamepad->IsKeyReleased( EPad_FaceBottom ) ||
+		 pGamepad->IsKeyReleased( EPad_FaceLeft ) )
+	{
+		pInput->m_bJumpReleased = TRUE;
+	}
+}
+
+void CInputParser::ParseKeyboard( CCharacter* pPlayer )
+{
+	if ( pPlayer == NULL ) return;
+
+	CCharacterInput* pInput = pPlayer->GetCharacterInput();
+	CKeyboard* pKey = GetGameEngine()->GetInput()->GetKeyboard();
+	if ( pKey->IsKeyDown( EKbKey_RIGHT ) )
+	{
+		pInput->m_fRunDirection = 1.0f;
+	}
+	else if ( pKey->IsKeyDown( EKbKey_LEFT ) )
+	{
+		pInput->m_fRunDirection = -1.0f;
+	}
+
+	if ( pKey->IsKeyTriggered( EKbKey_SPACE ) )
+	{
+		pInput->m_bSwitchPolarity = TRUE;
+	}
+
+	if ( pKey->IsKeyTriggered( EKbKey_CONTROL ) )
+	{
+		pInput->m_bJumpTriggered = TRUE;
+	}
+
+	if ( pKey->IsKeyReleased( EKbKey_CONTROL ) )
+	{
+		pInput->m_bJumpReleased = TRUE;
+	}
+}
+
+void CInputParser::SetPlayer1( CCharacter* pPlayer )
+{
+	m_pPlayer1 = pPlayer;
+}
+
+void CInputParser::SetPlayer2( CCharacter* pPlayer )
+{
+	m_pPlayer2 = pPlayer;
+}
+
+void CInputParser::ParseTestAI( CCharacter* pPlayer )
+{
+	CCharacterInput* pInput = pPlayer->GetCharacterInput();
+
+	VECTOR vDiff = m_pPlayer1->GetPosition() - pPlayer->GetPosition();
+	if ( vDiff.GetLengthSquared() > 50.0f * 50.0f )
+	{
+		if ( vDiff.x > 0 )
+		{
+			pInput->m_fRunDirection = 1.0f;
+		}
+		else
+		{
+			pInput->m_fRunDirection = -1.0f;
+		}
+
+		if ( vDiff.y < 0 )
+		{
+			if ( m_nJumpCnt == 0 )
+			{
+				pInput->m_bJumpTriggered = TRUE;
+			}
+			
+			m_nJumpCnt++;
+			if ( m_nJumpCnt > 30 )
+			{
+				m_nJumpCnt = 0;
+			}
+		}
+	}
+}

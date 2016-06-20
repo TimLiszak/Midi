@@ -1,0 +1,49 @@
+#ifndef _TILE_SELECTION_H_
+#define _TILE_SELECTION_H_
+
+class CTileSelection
+{
+public:
+	enum EResult
+	{
+		EResult_None,
+		EResult_MouseOver,
+		EResult_SelectTile,
+
+		EResult_Max
+	};
+
+
+	void		Init( class CTileSet* pTileSet, VECTOR vGridSize, VECTOR vPosition, BOOL bSelectMultiple );
+	void		Term();
+	EResult		Update();
+	void		Render();
+
+	void		UpdateTabPage();
+
+	void		SetSelectedTile( INT nTileId );
+	INT         GetSelectedTile();
+	INT         GetSelectedTile( VECTOR vOffset );
+	INT         GetMouseOverTile();
+
+protected:
+
+    INT         GetTile( VECTOR vTileCoords );
+
+	CTileSet* m_pTileSet;
+	VECTOR	m_vSelectedTileStart;
+	VECTOR	m_vSelectedTileEnd;
+
+    VECTOR	m_vMouseOverTile;
+	INT		m_nTilePage;
+
+	BOOL	m_bDrawAlternate;
+	FLOAT	m_fDrawAlternateTime;
+
+	VECTOR	m_vGridSize;
+	VECTOR	m_vPosition;
+
+    BOOL    m_bSelectMultiple;
+};
+
+#endif
