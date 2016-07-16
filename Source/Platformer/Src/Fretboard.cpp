@@ -44,7 +44,7 @@ CFretboard::CFretboard(CWorkspace* InWorkspace, VECTOR InLocation, CTuning InTun
 
 void CFretboard::Init()
 {
-	FretNotes.empty();
+	FretNotes.clear();
 	VECTOR Pos(Border, Header);
 	VECTOR OffsetY(0.0f, FretHeight);
 

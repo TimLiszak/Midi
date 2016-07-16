@@ -1,10 +1,10 @@
-﻿Build started 2016-06-19 4:12:54 PM.
+﻿Build started 2016-07-04 10:39:44 PM.
      1>Project "D:\Projects\Midi\Source\Platformer\Platformer.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I..\porttime /I..\pm_common /I..\GameEngine\GameEngine\Inc /I.\Inc /Zi /nologo /W4 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _VC80_UPGRADE=0x0600 /D _MBCS /Gm- /EHsc /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /Gd /TP /wd4100 /analyze- /errorReport:prompt Src\MidiController.cpp
-         MidiController.cpp
-     1>Src\MidiController.cpp(39): warning C4101: 'deflt' : unreferenced local variable
-     1>Src\MidiController.cpp(181): warning C4018: '>=' : signed/unsigned mismatch
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I..\porttime /I..\pm_common /I..\GameEngine\GameEngine\Inc /I.\Inc /Zi /nologo /W4 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _VC80_UPGRADE=0x0600 /D _MBCS /Gm- /EHsc /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /Gd /TP /wd4100 /analyze- /errorReport:prompt Src\Fretboard.cpp
+         Fretboard.cpp
+     1>Src\Fretboard.cpp(61): warning C4244: 'argument' : conversion from 'int' to 'const FLOAT', possible loss of data
+     1>Src\Fretboard.cpp(97): warning C4189: 'MidiController' : local variable is initialized but not referenced
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:".\Debug/Platformer.exe" /INCREMENTAL /NOLOGO /LIBPATH:.\Debug /LIBPATH:..\GameEngine\GameEngine\Debug opengl32.lib glu32.lib odbc32.lib odbccp32.lib dxguid.lib dinput8.lib comctl32.lib ..\Debug\portmidi_s.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /NODEFAULTLIB:MSVCRTD /NODEFAULTLIB:MSVCP90D /NODEFAULTLIB:msvcprtd /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:".\Debug/BlankGame.pdb" /ASSEMBLYDEBUG /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE:NO /IMPLIB:".\Debug\Platformer.lib" /MACHINE:X86 /SAFESEH .\Debug\Resource.res
          .\Debug/Actor.obj
@@ -62,4 +62,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.17
+Time Elapsed 00:00:02.75
