@@ -1,5 +1,6 @@
 Source/Platformer/Debug/
 Source/Platformer/*.sdf
 Source/Platformer/*.suo
+Source/Platformer/*.opensdf
 Source/pm_test/Debug
 Source/pm_test/test.dir/
